@@ -24,21 +24,18 @@ export class SSEManager {
   }
 
   // 全クライアントにメッセージを配信（JSON & 末尾は \n\n）
-  async broadcast(payload: SSEPayload) {
+  async broadcast(raw: string) {
     const encoder = new TextEncoder();
-    //const msg = `event: ${payload.event}\ndata: ${JSON.stringify(payload.data)}\n\n`;
-    const bytes = encoder.encode(payload);
+    const bytes = encoder.encode(raw);
 
     const toRemove: WritableStreamDefaultWriter[] = [];
     for (const w of this.connections) {
       try {
-        await w.write(bytes); // Uint8Array で書くのが安定
+        await w.write(bytes);
       } catch {
-        // 書き込み不能な接続は削除対象に
         toRemove.push(w);
       }
     }
-    // まとめてクリーンアップ
     for (const w of toRemove) this.removeConnection(w);
   }
 }
