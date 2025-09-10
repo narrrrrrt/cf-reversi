@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Reversi Room</title>
+</head>
+<body>
+  <h1>Reversi Room</h1>
+
+  <div id="info"></div>
+  <div id="tokenArea"></div>
+
+  <!-- GET版 -->
+  <h2>GET版</h2>
+  <div>
+    <button onclick="joinGet()">Join (GET)</button>
+    <button onclick="leaveGet()">Leave (GET)</button>
+  </div>
+  <div id="getEndpoint"></div>
+  <div id="getResponse"></div>
+
+  <hr>
+
+  <!-- POST版 -->
+  <h2>POST版</h2>
+  <div>
+    <button onclick="joinPost()">Join (POST)</button>
+    <button onclick="leavePost()">Leave (POST)</button>
+  </div>
+  <div id="postEndpoint"></div>
+  <div id="postResponse"></div>
+
+  <script>
+    const url = new URL(window.location.href);
+    const id = url.searchParams.get("id");
+    const seat = url.searchParams.get("seat");
+    let token = null;
+
+    document.getElementById("info").innerText = `Room ID: ${id}, Seat: ${seat}`;
+
+    function setToken(t) {
+      token = t;
+      document.getElementById("tokenArea").innerText = `Token: ${token}`;
+    }
+
+    async function joinGet() {
+      const endpoint = `/${id}/join?seat=${seat}&token=${Date.now()}`;
+      document.getElementById("getEndpoint").innerText = endpoint;
+      const res = await fetch(endpoint);
+      const json = await res.json();
+      if (json.role) setToken(json.role + "-" + Date.now()); // 簡易的にローカルtoken
+      document.getElementById("getResponse").innerText = JSON.stringify(json) + " (status " + res.status + ")";
+    }
+
+    async function leaveGet() {
+      const endpoint = `/${id}/leave?token=${token}`;
+      document.getElementById("getEndpoint").innerText = endpoint;
+      const res = await fetch(endpoint);
+      const json = await res.json();
+      document.getElementById("getResponse").innerText = JSON.stringify(json) + " (status " + res.status + ")";
+    }
+
+    async function joinPost() {
+      const endpoint = `/${id}/join`;
+      document.getElementById("postEndpoint").innerText = endpoint;
+      const body = { seat, token: Date.now().toString() };
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (json.role) setToken(json.role + "-" + Date.now());
+      document.getElementById("postResponse").innerText = JSON.stringify(json) + " (status " + res.status + ")";
+    }
+
+    async function leavePost() {
+      const endpoint = `/${id}/leave`;
+      document.getElementById("postEndpoint").innerText = endpoint;
+      const body = { token };
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      document.getElementById("postResponse").innerText = JSON.stringify(json) + " (status " + res.status + ")";
+    }
+  </script>
+</body>
+</html>
