@@ -15,8 +15,8 @@
 
   <!-- POST -->
   <div class="action-row"><button onclick="join()">Join (POST)</button><span id="joinPost" class="url"></span></div>
-  <div class="action-row"><button onclick="move(3,4)">Move (POST)</button><span id="movePost" class="url"></span></div>
-  <div class="action-row"><button onclick="leave()">Leave (POST)</button><span id="leavePost" class="url"></span></div>
+  <div class="action-row"><button onclick="movePost()">Move (POST)</button><span id="movePost" class="url"></span></div>
+  <div class="action-row"><button onclick="leavePost()">Leave (POST)</button><span id="leavePost" class="url"></span></div>
 
   <!-- GET -->
   <div class="action-row"><button onclick="joinGet()">Join (GET)</button><span id="joinGet" class="url"></span></div>
@@ -34,16 +34,16 @@
 
     // URL 表示
     document.getElementById("joinPost").textContent = `POST /${roomId}/join (body seat=${seat})`;
-    document.getElementById("movePost").textContent = `POST /${roomId}/move (body {x,y})`;
+    document.getElementById("movePost").textContent = `POST /${roomId}/move (body {x,y,token})`;
     document.getElementById("leavePost").textContent = `POST /${roomId}/leave (body token=...)`;
 
     document.getElementById("joinGet").textContent  = `GET  /${roomId}/join?seat=${seat}`;
-    document.getElementById("moveGet").textContent  = `GET  /${roomId}/move?x=3&y=4`;
+    document.getElementById("moveGet").textContent  = `GET  /${roomId}/move?x=3&y=4&token=...`;
     document.getElementById("leaveGet").textContent = `GET  /${roomId}/leave?token=...`;
 
     document.getElementById("sseUrl").textContent   = `GET  /${roomId}/sse`;
 
-    // POST handlers
+    // --- POST handlers ---
     async function join() {
       const res = await fetch(`/${roomId}/join`, {
         method: "POST",
@@ -54,20 +54,65 @@
       document.getElementById("status").textContent = "Joined as " + seat;
       if (data.token) {
         token = data.token;
-        document.getElementById("token").textContent = "Token: " + token;
-        document.getElementById("leavePost").textContent = `POST /${roomId}/leave (body token=${token})`;
-        document.getElementById("leaveGet").textContent  = `GET  /${roomId}/leave?token=${token}`;
+        document.getElementById("token").innerHTML = "Token: " + token;
       }
     }
-    async function move(x,y){ await fetch(`/${roomId}/move`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({x,y})}); }
-    async function leave(){ if(!token){alert("No token");return;} await fetch(`/${roomId}/leave`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token})}); }
 
-    // GET handlers
-    function joinGet(){ window.open(`/${roomId}/join?seat=${seat}`,"_blank"); }
-    function moveGet(){ window.open(`/${roomId}/move?x=3&y=4`,"_blank"); }
-    function leaveGet(){ if(!token){alert("No token");return;} window.open(`/${roomId}/leave?token=${token}`,"_blank"); }
+    async function movePost() {
+      if (!token) { alert("No token"); return; }
+      const res = await fetch(`/${roomId}/move`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ x:3, y:4, token })
+      });
+      const data = await res.json();
+      document.getElementById("token").innerHTML = JSON.stringify(data);
+    }
 
-    function connectSSE(){ const es=new EventSource(`/${roomId}/sse`); es.onmessage=(e)=>console.log("SSE:",e.data); }
+    async function leavePost() {
+      if (!token) { alert("No token"); return; }
+      const res = await fetch(`/${roomId}/leave`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+      document.getElementById("token").innerHTML = JSON.stringify(data);
+    }
+
+    // --- GET handlers ---
+    async function joinGet() {
+      const res = await fetch(`/${roomId}/join?seat=${seat}`);
+      const data = await res.json();
+      if (data.token) {
+        token = data.token;
+        document.getElementById("token").innerHTML = "Token: " + token;
+      } else {
+        document.getElementById("token").innerHTML = JSON.stringify(data);
+      }
+    }
+
+    async function moveGet() {
+      if (!token) { alert("No token"); return; }
+      const res = await fetch(`/${roomId}/move?x=3&y=4&token=${token}`);
+      const data = await res.json();
+      document.getElementById("token").innerHTML = JSON.stringify(data);
+    }
+
+    async function leaveGet() {
+      if (!token) { alert("No token"); return; }
+      const res = await fetch(`/${roomId}/leave?token=${token}`);
+      const data = await res.json();
+      document.getElementById("token").innerHTML = JSON.stringify(data);
+    }
+
+    // --- SSE ---
+    function connectSSE() {
+      const es = new EventSource(`/${roomId}/sse`);
+      es.onmessage = (e) => {
+        console.log("SSE:", e.data);
+      };
+    }
   </script>
 </body>
 </html>
