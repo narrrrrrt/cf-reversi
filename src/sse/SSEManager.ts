@@ -12,7 +12,7 @@ export class SSEManager {
 
   // 接続を削除
   removeConnection(stream: WritableStreamDefaultWriter) {
-    this.connections.delete(stream);
+    //this.connections.delete(stream);
   }
 
   // 全クライアントにメッセージを配信
