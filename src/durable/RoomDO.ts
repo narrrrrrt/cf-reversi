@@ -30,7 +30,7 @@ export class RoomDO {
           event: "init",
           status: this.room.status,
           step: this.room.step,
-          board: this.room.board(),
+          board: this.room.boardData,
         });
       }
 
