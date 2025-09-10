@@ -9,7 +9,7 @@ export default {
     }
 
     // --- 部屋ID抽出 ---
-    const [, roomIdRaw] = url.pathname.split("/");
+    const roomId = url.pathname.split("/")[1];
 
     // ★ 許可リスト（文字列）
     const allowed = ["1", "2", "3", "4"];

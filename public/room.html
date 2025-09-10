@@ -1,98 +1,71 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Reversi Room</title>
 </head>
 <body>
   <h1>Reversi Room</h1>
-
-  <div id="info"></div>
-  <div id="tokenArea"></div>
-
-  <!-- GET版 -->
-  <h2>GET版</h2>
-  <div>
-    <button onclick="joinGet()">Join (GET)</button>
-    <button onclick="leaveGet()">Leave (GET)</button>
-  </div>
-  <div id="getEndpoint"></div>
-  <div id="getResponse"></div>
-
-  <hr>
-
-  <!-- POST版 -->
-  <h2>POST版</h2>
-  <div>
-    <button onclick="joinPost()">Join (POST)</button>
-    <button onclick="leavePost()">Leave (POST)</button>
-  </div>
-  <div id="postEndpoint"></div>
-  <div id="postResponse"></div>
+  <div id="status">Not joined yet</div>
+  <div id="token">Token: (not issued)</div>
+  <button onclick="join()">Join</button>
+  <button onclick="move(3,4)">Move (3,4)</button>
+  <button onclick="leave()">Leave</button>
+  <button onclick="connectSSE()">Connect SSE</button>
 
   <script>
-    const url = new URL(window.location.href);
-    const id = url.searchParams.get("id");
-    const seat = url.searchParams.get("seat");
+    const params = new URLSearchParams(window.location.search);
+    const roomId = params.get("id");   // 例: "1"
+    const seat   = params.get("seat"); // 例: "black"
+
     let token = null;
 
-    document.getElementById("info").innerText = `Room ID: ${id}, Seat: ${seat}`;
-
-    function setToken(t) {
-      token = t;
-      document.getElementById("tokenArea").innerText = `Token: ${token}`;
-    }
-
-    // --- GET Join ---
-    async function joinGet() {
-      const endpoint = `/join?id=${id}&seat=${seat}`;
-      document.getElementById("getEndpoint").innerText = endpoint;
-      const res = await fetch(endpoint);
-      const json = await res.json();
-      if (json.token) setToken(json.token);
-      document.getElementById("getResponse").innerText =
-        JSON.stringify(json) + " (status " + res.status + ")";
-    }
-
-    // --- GET Leave ---
-    async function leaveGet() {
-      const endpoint = `/leave?id=${id}&token=${token}`;
-      document.getElementById("getEndpoint").innerText = endpoint;
-      const res = await fetch(endpoint);
-      const json = await res.json();
-      document.getElementById("getResponse").innerText =
-        JSON.stringify(json) + " (status " + res.status + ")";
-    }
-
-    // --- POST Join ---
-    async function joinPost() {
-      const endpoint = `/join`;
-      document.getElementById("postEndpoint").innerText = endpoint;
-      const body = { id, seat };
-      const res = await fetch(endpoint, {
+    async function join() {
+      const res = await fetch(`/room/${roomId}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ seat })
       });
-      const json = await res.json();
-      if (json.token) setToken(json.token);
-      document.getElementById("postResponse").innerText =
-        JSON.stringify(json) + " (status " + res.status + ")";
+      const data = await res.json();
+
+      document.getElementById("status").textContent = "Joined as " + seat;
+      if (data.token) {
+        token = data.token;
+        document.getElementById("token").textContent = "Token: " + token;
+      }
     }
 
-    // --- POST Leave ---
-    async function leavePost() {
-      const endpoint = `/leave`;
-      document.getElementById("postEndpoint").innerText = endpoint;
-      const body = { id, token };
-      const res = await fetch(endpoint, {
+    async function move(x, y) {
+      const res = await fetch(`/room/${roomId}/move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ x, y })
       });
-      const json = await res.json();
-      document.getElementById("postResponse").innerText =
-        JSON.stringify(json) + " (status " + res.status + ")";
+      const data = await res.json();
+      console.log("Move:", data);
+    }
+
+    async function leave() {
+      if (!token) {
+        alert("No token available. Join first.");
+        return;
+      }
+      const res = await fetch(`/room/${roomId}/leave`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+
+      document.getElementById("status").textContent = "Left room";
+      document.getElementById("token").textContent = "Token: (released)";
+    }
+
+    function connectSSE() {
+      const eventSource = new EventSource(`/room/${roomId}/sse`);
+      eventSource.onmessage = (e) => {
+        console.log("SSE:", e.data);
+      };
     }
   </script>
 </body>
