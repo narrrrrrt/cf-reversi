@@ -15,19 +15,25 @@ export default {
     // ★ 許可リスト（文字列）
     const allowed = ["1", "2", "3", "4"];
 
-    // チェック: 文字列が完全一致しているか
     if (!allowed.includes(roomId)) {
       return new Response("Room not allowed", { status: 403 });
     }
 
-    // --- DO にフォワード ---
-    const id = env.RoomDO.idFromName(roomId);
-    const stub = env.RoomDO.get(id);
+    try {
+      // --- DO にフォワード ---
+      const id = env.RoomDO.idFromName(roomId);
+      const stub = env.RoomDO.get(id);
 
-    // DO に渡すときは「アクション部分だけ」にする
-    return stub.fetch(
-      new Request(`http://do/${action}${url.search}`, request)
-    );
+      return await stub.fetch(
+        new Request(`http://do/${action}${url.search}`, request)
+      );
+    } catch (err: any) {
+      // DO呼び出し前後で落ちたらここに来る
+      return new Response(
+        `DO error intercepted: ${(err && err.message) || String(err)}`,
+        { status: 200 }
+      );
+    }
   },
 };
 
