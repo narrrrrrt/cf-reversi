@@ -13,45 +13,37 @@
   <div id="status">Not joined yet</div>
   <div id="token">Token: (not issued)</div>
 
-  <div class="action-row">
-    <button onclick="join()">Join</button>
-    <span id="joinPost" class="url"></span>
-    <span id="joinGet" class="url"></span>
-  </div>
-  <div class="action-row">
-    <button onclick="move(3,4)">Move (3,4)</button>
-    <span id="movePost" class="url"></span>
-    <span id="moveGet" class="url"></span>
-  </div>
-  <div class="action-row">
-    <button onclick="leave()">Leave</button>
-    <span id="leavePost" class="url"></span>
-    <span id="leaveGet" class="url"></span>
-  </div>
-  <div class="action-row">
-    <button onclick="connectSSE()">Connect SSE</button>
-    <span id="sseUrl" class="url"></span>
-  </div>
+  <!-- POST -->
+  <div class="action-row"><button onclick="join()">Join (POST)</button><span id="joinPost" class="url"></span></div>
+  <div class="action-row"><button onclick="move(3,4)">Move (POST)</button><span id="movePost" class="url"></span></div>
+  <div class="action-row"><button onclick="leave()">Leave (POST)</button><span id="leavePost" class="url"></span></div>
+
+  <!-- GET -->
+  <div class="action-row"><button onclick="joinGet()">Join (GET)</button><span id="joinGet" class="url"></span></div>
+  <div class="action-row"><button onclick="moveGet()">Move (GET)</button><span id="moveGet" class="url"></span></div>
+  <div class="action-row"><button onclick="leaveGet()">Leave (GET)</button><span id="leaveGet" class="url"></span></div>
+
+  <!-- SSE -->
+  <div class="action-row"><button onclick="connectSSE()">Connect SSE</button><span id="sseUrl" class="url"></span></div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
-    const roomId = params.get("id");   // 例: "1"
-    const seat   = params.get("seat"); // 例: "black"
-
+    const roomId = params.get("id");
+    const seat   = params.get("seat");
     let token = null;
 
-    // 初期URL表示（直下形式に修正）
+    // URL 表示
     document.getElementById("joinPost").textContent = `POST /${roomId}/join (body seat=${seat})`;
-    document.getElementById("joinGet").textContent  = `GET  /${roomId}/join?seat=${seat}`;
-
     document.getElementById("movePost").textContent = `POST /${roomId}/move (body {x,y})`;
-    document.getElementById("moveGet").textContent  = `GET  /${roomId}/move?x=3&y=4`;
-
     document.getElementById("leavePost").textContent = `POST /${roomId}/leave (body token=...)`;
-    document.getElementById("leaveGet").textContent  = `GET  /${roomId}/leave?token=...`;
+
+    document.getElementById("joinGet").textContent  = `GET  /${roomId}/join?seat=${seat}`;
+    document.getElementById("moveGet").textContent  = `GET  /${roomId}/move?x=3&y=4`;
+    document.getElementById("leaveGet").textContent = `GET  /${roomId}/leave?token=...`;
 
     document.getElementById("sseUrl").textContent   = `GET  /${roomId}/sse`;
 
+    // POST handlers
     async function join() {
       const res = await fetch(`/${roomId}/join`, {
         method: "POST",
@@ -63,45 +55,19 @@
       if (data.token) {
         token = data.token;
         document.getElementById("token").textContent = "Token: " + token;
-        document.getElementById("leavePost").textContent =
-          `POST /${roomId}/leave (body token=${token})`;
-        document.getElementById("leaveGet").textContent =
-          `GET  /${roomId}/leave?token=${token}`;
+        document.getElementById("leavePost").textContent = `POST /${roomId}/leave (body token=${token})`;
+        document.getElementById("leaveGet").textContent  = `GET  /${roomId}/leave?token=${token}`;
       }
     }
+    async function move(x,y){ await fetch(`/${roomId}/move`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({x,y})}); }
+    async function leave(){ if(!token){alert("No token");return;} await fetch(`/${roomId}/leave`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token})}); }
 
-    async function move(x, y) {
-      const res = await fetch(`/${roomId}/move`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ x, y })
-      });
-      const data = await res.json();
-      console.log("Move:", data);
-    }
+    // GET handlers
+    function joinGet(){ window.open(`/${roomId}/join?seat=${seat}`,"_blank"); }
+    function moveGet(){ window.open(`/${roomId}/move?x=3&y=4`,"_blank"); }
+    function leaveGet(){ if(!token){alert("No token");return;} window.open(`/${roomId}/leave?token=${token}`,"_blank"); }
 
-    async function leave() {
-      if (!token) {
-        alert("No token available. Join first.");
-        return;
-      }
-      const res = await fetch(`/${roomId}/leave`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token })
-      });
-      const data = await res.json();
-      document.getElementById("status").textContent = "Left room";
-      document.getElementById("token").textContent = "Token: (released)";
-    }
-
-    function connectSSE() {
-      const url = `/${roomId}/sse`;
-      const eventSource = new EventSource(url);
-      eventSource.onmessage = (e) => {
-        console.log("SSE:", e.data);
-      };
-    }
+    function connectSSE(){ const es=new EventSource(`/${roomId}/sse`); es.onmessage=(e)=>console.log("SSE:",e.data); }
   </script>
 </body>
 </html>
