@@ -22,7 +22,7 @@ export async function leaveHandler(
       event: "leave",
       status: _.status,
       step: _.step,
-      board: _.board(),
+      board: _.boardData,
       black: !!_.black,   // ★ 黒が埋まっているか
       white: !!_.white,   // ★ 白が埋まっているか
     },

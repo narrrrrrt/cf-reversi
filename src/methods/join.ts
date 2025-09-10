@@ -21,7 +21,7 @@ export async function joinHandler(
       event: "join",
       status: _.status,
       step: _.step,
-      board: _.board(),
+      board: _.boardData,
       black: !!_.black,
       white: !!_.white,
     },

@@ -30,7 +30,7 @@ export async function moveHandler(
       event: "move",
       status: _.status,
       step: _.step,
-      board: _.board(),
+      board: _.boardData,
       token,
     },
     response: {

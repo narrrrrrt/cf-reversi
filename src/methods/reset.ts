@@ -13,7 +13,7 @@ export async function resetHandler(
       event: "reset",
       status: _.status,
       step: _.step,
-      board: _.board(),
+      board: _.boardData,
     },
     response: {
       ok: true,
