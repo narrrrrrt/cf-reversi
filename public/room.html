@@ -43,48 +43,56 @@
       document.getElementById("tokenArea").innerText = `Token: ${token}`;
     }
 
+    // --- GET Join ---
     async function joinGet() {
-      const endpoint = `/${id}/join?seat=${seat}&token=${Date.now()}`;
+      const endpoint = `/join?id=${id}&seat=${seat}`;
       document.getElementById("getEndpoint").innerText = endpoint;
       const res = await fetch(endpoint);
       const json = await res.json();
-      if (json.role) setToken(json.role + "-" + Date.now()); // 簡易的にローカルtoken
-      document.getElementById("getResponse").innerText = JSON.stringify(json) + " (status " + res.status + ")";
+      if (json.token) setToken(json.token);
+      document.getElementById("getResponse").innerText =
+        JSON.stringify(json) + " (status " + res.status + ")";
     }
 
+    // --- GET Leave ---
     async function leaveGet() {
-      const endpoint = `/${id}/leave?token=${token}`;
+      const endpoint = `/leave?id=${id}&token=${token}`;
       document.getElementById("getEndpoint").innerText = endpoint;
       const res = await fetch(endpoint);
       const json = await res.json();
-      document.getElementById("getResponse").innerText = JSON.stringify(json) + " (status " + res.status + ")";
+      document.getElementById("getResponse").innerText =
+        JSON.stringify(json) + " (status " + res.status + ")";
     }
 
+    // --- POST Join ---
     async function joinPost() {
-      const endpoint = `/${id}/join`;
+      const endpoint = `/join`;
       document.getElementById("postEndpoint").innerText = endpoint;
-      const body = { seat, token: Date.now().toString() };
+      const body = { id, seat };
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       const json = await res.json();
-      if (json.role) setToken(json.role + "-" + Date.now());
-      document.getElementById("postResponse").innerText = JSON.stringify(json) + " (status " + res.status + ")";
+      if (json.token) setToken(json.token);
+      document.getElementById("postResponse").innerText =
+        JSON.stringify(json) + " (status " + res.status + ")";
     }
 
+    // --- POST Leave ---
     async function leavePost() {
-      const endpoint = `/${id}/leave`;
+      const endpoint = `/leave`;
       document.getElementById("postEndpoint").innerText = endpoint;
-      const body = { token };
+      const body = { id, token };
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       const json = await res.json();
-      document.getElementById("postResponse").innerText = JSON.stringify(json) + " (status " + res.status + ")";
+      document.getElementById("postResponse").innerText =
+        JSON.stringify(json) + " (status " + res.status + ")";
     }
   </script>
 </body>
