@@ -12,6 +12,8 @@ export function createSSE(manager: SSEManager, request: Request): Response {
 
   // 接続を SSEManager に登録
   manager.addConnection(writer);
+  
+  writer.write(`event: open\ndata: ${JSON.stringify({ message: "SSE connected" })}\n\n`);
 
   // クライアントが切断したときのクリーンアップ
   request.signal.addEventListener("abort", () => {
