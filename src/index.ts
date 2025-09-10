@@ -8,23 +8,26 @@ export default {
       return assetResponse;
     }
 
-    // --- 部屋ID抽出 ---
-    const roomId = url.pathname.split("/")[1];
+    // --- 部屋IDとアクション抽出 ---
+    const [, roomId, action] = url.pathname.split("/"); 
+    // 例: "/1/join" → roomId="1", action="join"
 
     // ★ 許可リスト（文字列）
     const allowed = ["1", "2", "3", "4"];
 
     // チェック: 文字列が完全一致しているか
-    if (!allowed.includes(roomIdRaw)) {
+    if (!allowed.includes(roomId)) {
       return new Response("Room not allowed", { status: 403 });
     }
 
     // --- DO にフォワード ---
-    // roomIdRaw は "1"〜"4" の文字列に限定されている
-    const id = env.RoomDO.idFromName(roomIdRaw);
+    const id = env.RoomDO.idFromName(roomId);
     const stub = env.RoomDO.get(id);
 
-    return stub.fetch(new Request(`http://do${url.pathname}${url.search}`, request));
+    // DO に渡すときは「アクション部分だけ」にする
+    return stub.fetch(
+      new Request(`http://do/${action}${url.search}`, request)
+    );
   },
 };
 
