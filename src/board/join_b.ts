@@ -5,9 +5,10 @@ export function join(_: Room, token: string, seat: Seat): Seat {
     _.black = token;
     _.step++;
 
-    if (_.white) {
-      _.status = "black";
-      _.boardData = _.legalBoard("black"); // ← 外出しメソッド呼び出し
+    // ★ 黒白両方揃ったら合法手を生成
+    if (_.black && _.white) {
+      _.status = "black"; // 先手は黒
+      _.boardData = _.legalBoard("black");
     } else {
       _.status = "waiting";
       _.boardData = _.defaultBoard();
@@ -19,8 +20,9 @@ export function join(_: Room, token: string, seat: Seat): Seat {
     _.white = token;
     _.step++;
 
-    if (_.black) {
-      _.status = "black";
+    // ★ 黒白両方揃ったら合法手を生成
+    if (_.black && _.white) {
+      _.status = "black"; // 先手は黒
       _.boardData = _.legalBoard("black");
     } else {
       _.status = "waiting";
