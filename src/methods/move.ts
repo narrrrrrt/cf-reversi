@@ -1,5 +1,5 @@
 import { Room } from "../core/Room";
-import { MethodResult, ResponsePayload } from "../core/Types";
+import { MethodResult, ResponsePayload, SSEMessage } from "../core/Types";
 import { move } from "../board/move_b";
 
 export async function moveHandler(
@@ -8,13 +8,20 @@ export async function moveHandler(
 ): Promise<MethodResult> {
   const { x, y, token } = params as { x: number; y: number; token: string };
 
-  const response: ResponsePayload = { ok: false };
-  let statusCode = 200;
-  let broadcast: any = undefined;
+  const response: ResponsePayload = {
+    ok: false,        // 1. ok
+    step: undefined,  // 2. step
+    error: undefined, // 3. error
+    role: undefined,  // 4. role
+    token: undefined, // 5. token
+  };
+
+  // ★ デフォルトは 400
+  let statusCode = 400;
+  let broadcast: SSEMessage | undefined = undefined;
 
   if (!token) {
     response.error = "Missing token";
-    statusCode = 400;
   } else {
     const result = move(_, x, y, token);
 
@@ -25,27 +32,30 @@ export async function moveHandler(
           break;
         case "illegal_pass":
           response.error = "Illegal pass";
-          statusCode = 400;
           break;
         case "invalid_move":
           response.error = "Invalid move";
-          statusCode = 400;
           break;
         default:
           response.error = "Unknown error";
-          statusCode = 400;
       }
     } else {
+      // ★ 成功時だけ 200
       await _.save();
       response.ok = true;
       response.step = _.step;
+      statusCode = 200;
 
       broadcast = {
         event: "move",
-        status: _.status,
-        step: _.step,
-        board: _.boardData, // ★ プロパティを返す
-        token,
+        data: {
+          status: _.status,     // 1. status
+          step: _.step,         // 2. step
+          // role: 不要
+          black: !!_.black,     // 4. black occupancy
+          white: !!_.white,     // 5. white occupancy
+          board: _.boardData,   // 6. board
+        },
       };
     }
   }

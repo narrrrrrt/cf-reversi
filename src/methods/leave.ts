@@ -1,5 +1,5 @@
 import { Room } from "../core/Room";
-import { MethodResult } from "../core/Types";
+import { MethodResult, SSEMessage } from "../core/Types";
 
 export async function leaveHandler(
   _: Room,
@@ -9,7 +9,13 @@ export async function leaveHandler(
 
   if (!token) {
     return {
-      response: { ok: false, error: "Missing token" },
+      response: {
+        ok: false,        // 1. ok
+        step: undefined,  // 2. step
+        error: "Missing token", // 3. error
+        role: undefined,  // 4. role
+        token: undefined, // 5. token
+      },
       status: 400,
     };
   }
@@ -17,18 +23,26 @@ export async function leaveHandler(
   _.leave(token);
   await _.save();
 
-  return {
-    broadcast: {
-      event: "leave",
-      status: _.status,
-      step: _.step,
-      board: _.boardData,
-      black: !!_.black,   // ★ 黒が埋まっているか
-      white: !!_.white,   // ★ 白が埋まっているか
+  const broadcast: SSEMessage = {
+    event: "leave",
+    data: {
+      status: _.status,     // 1. status
+      step: _.step,         // 2. step
+      // role: 省略 (leave では不要)
+      black: !!_.black,     // 4. black occupancy
+      white: !!_.white,     // 5. white occupancy
+      board: _.boardData,   // 6. board
     },
+  };
+
+  return {
+    broadcast,
     response: {
-      ok: true,
-      step: _.step,
+      ok: true,        // 1. ok
+      step: _.step,    // 2. step
+      error: undefined,// 3. error
+      role: undefined, // 4. role
+      token: undefined,// 5. token
     },
     status: 200,
   };

@@ -1,11 +1,10 @@
-// SSEManager.ts
-export type SSEPayload = { event: string; data?: any };
+import { SSEMessage } from "../core/Types";
 
 export class SSEManager {
   private connections: Set<WritableStreamDefaultWriter>;
-  private initPayload?: any;
+  private initPayload?: SSEMessage;
 
-  constructor(initPayload?: any) {
+  constructor(initPayload?: SSEMessage) {
     this.connections = new Set();
     this.initPayload = initPayload;
   }
@@ -17,28 +16,31 @@ export class SSEManager {
     // 接続直後に初回イベントを送信（あれば）
     if (this.initPayload) {
       const encoder = new TextEncoder();
-      //const msg = JSON.stringify(this.initPayload) + "\n\n";
-      const msg = `data: ${JSON.stringify(this.initPayload)}\n\n`;
+      const msg =
+        `event: ${this.initPayload.event}\n` +
+        `data: ${JSON.stringify(this.initPayload.data ?? {})}\n\n`;
       writer.write(encoder.encode(msg)).catch(() => {
         this.removeConnection(writer);
       });
     }
   }
 
-  // 接続を削除（★ close してから削除：元に戻した＋改善）
+  // 接続を削除
   removeConnection(writer: WritableStreamDefaultWriter) {
     try {
-      writer.close(); // ストリームを正しく閉じる
+      writer.close();
     } catch {
       // すでに閉じている場合などは無視
     }
     this.connections.delete(writer);
   }
 
-  // 全クライアントにメッセージを配信（JSON & 末尾は \n\n）
-  async broadcast(payload: any) {
-    //const msg = JSON.stringify(payload) + "\n\n";
-    const msg = `data: ${JSON.stringify(payload)}\n\n`;
+  // 全クライアントにメッセージを配信
+  async broadcast(payload: SSEMessage) {
+    const msg =
+      `event: ${payload.event}\n` +
+      `data: ${JSON.stringify(payload.data ?? {})}\n\n`;
+
     const encoder = new TextEncoder();
     const bytes = encoder.encode(msg);
 

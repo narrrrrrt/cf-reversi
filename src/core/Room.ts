@@ -1,6 +1,5 @@
 // === 型定義 ===
-export type Status = "waiting" | "black" | "white" | "leave" | "finished";
-export type Seat   = "black" | "white" | "observer";
+import { Seat, Status } from "./Types";
 import { legalBoard } from "../board/legalBoard";
 
 // === 外出しメソッドをインポート ===
