@@ -77,11 +77,22 @@
 
     let token = null;
 
-    function setResponse(res, status) {
+    async function handleResponse(res) {
+      let rawText = "";
+      let parsed = null;
+
+      try {
+        parsed = await res.json();
+        rawText = JSON.stringify(parsed);
+      } catch {
+        rawText = await res.text();
+      }
+
       document.getElementById("responseArea").innerText =
-        "Response: " + JSON.stringify(res) + " (status " + status + ")";
-      if (res.token) {
-        token = res.token;
+        "Response: " + rawText + " (status " + res.status + ")";
+
+      if (parsed && parsed.token) {
+        token = parsed.token;
         document.getElementById("tokenArea").innerText = "Token: " + token;
       }
     }
@@ -90,8 +101,7 @@
     async function joinGet(seat) {
       const endpoint = `/${id}/join?seat=${seat}`;
       const res = await fetch(endpoint);
-      const json = await res.json();
-      setResponse(json, res.status);
+      await handleResponse(res);
     }
 
     async function moveGet() {
@@ -99,15 +109,13 @@
       const y = document.getElementById("blackY").value;
       const endpoint = `/${id}/move?token=${token}&x=${x}&y=${y}`;
       const res = await fetch(endpoint);
-      const json = await res.json();
-      setResponse(json, res.status);
+      await handleResponse(res);
     }
 
     async function leaveGet() {
       const endpoint = `/${id}/leave?token=${token}`;
       const res = await fetch(endpoint);
-      const json = await res.json();
-      setResponse(json, res.status);
+      await handleResponse(res);
     }
 
     // --- White / Observer (POST) ---
@@ -119,8 +127,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const json = await res.json();
-      setResponse(json, res.status);
+      await handleResponse(res);
     }
 
     async function movePost() {
@@ -133,8 +140,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const json = await res.json();
-      setResponse(json, res.status);
+      await handleResponse(res);
     }
 
     async function leavePost() {
@@ -145,8 +151,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const json = await res.json();
-      setResponse(json, res.status);
+      await handleResponse(res);
     }
 
     // --- セレクトボックスに 1〜8 をセット ---
