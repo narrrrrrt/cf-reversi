@@ -10,7 +10,8 @@ export class RoomDO {
   constructor(private state: DurableObjectState, private env: any) {
     this.sse = new SSEManager();
     // ★ 起動時にアラームをセット（例: 5 秒後）
-    this.state.setAlarm(Date.now() + 5_000);
+    //this.state.setAlarm(Date.now() + 5_000);
+    this.state.storage.setAlarm(Date.now() + 5_000);
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -71,7 +72,8 @@ export class RoomDO {
     await this.room.save();
 
     // 次のアラームを再設定
-    this.state.setAlarm(Date.now() + 5_000);
+    //this.state.setAlarm(Date.now() + 5_000);
+    this.state.storage.setAlarm(Date.now() + 5_000);
   }
 
   // GET クエリ / POST JSON を params にまとめる
