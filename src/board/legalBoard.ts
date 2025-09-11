@@ -14,6 +14,15 @@ export function legalBoard(_: Room, turn: "black" | "white"): string[] {
   const me = turn === "black" ? "B" : "W";
   const opp = turn === "black" ? "W" : "B";
 
+  // ★ 古い合法手マークをリセット
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (board[y][x] === "*") {
+        board[y][x] = "-";
+      }
+    }
+  }
+
   // 8方向
   const directions = [
     [1, 0], [-1, 0], [0, 1], [0, -1],
@@ -45,7 +54,7 @@ export function legalBoard(_: Room, turn: "black" | "white"): string[] {
           break;
         }
 
-        if (legal) break;
+        if (legal) break; // 1方向でも合法なら即決定
       }
 
       if (legal) {
