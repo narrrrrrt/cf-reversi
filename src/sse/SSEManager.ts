@@ -7,6 +7,13 @@ export class SSEManager {
   constructor(initPayload?: SSEMessage) {
     this.connections = new Set();
     this.initPayload = initPayload;
+    
+    // ★ ここで定期 pulse をセット（例: 30 秒ごと）
+    this.pulseTimer = setInterval(() => {
+      if (this.connections.size > 0) {
+        this.broadcast({ event: "pulse", data: {} });
+      }
+    }, 30000); 
   }
 
   // 新しい SSE 接続を登録
