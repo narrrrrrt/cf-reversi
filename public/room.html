@@ -70,11 +70,14 @@
 
   <!-- SSE -->
   <h2>SSE</h2>
-  <div id="sseArea">SSE: </div>
+  <div id="sseInit">init: </div>
+  <div id="sseJoin">join: </div>
+  <div id="sseMove">move: </div>
+  <div id="sseLeave">leave: </div>
+  <div id="sseReset">reset: </div>
 
   <script>
     const id = "1"; // ★ 今は固定で Room 1
-
     let token = null;
 
     async function handleResponse(res) {
@@ -169,10 +172,21 @@
 
     // --- SSE 接続 ---
     const es = new EventSource(`/${id}/sse`);
-    es.onmessage = (e) => {
-      document.getElementById("sseArea").innerText =
-        "SSE: " + e.data;
-    };
+    es.addEventListener("init", (e) => {
+      document.getElementById("sseInit").innerText = "init: " + e.data;
+    });
+    es.addEventListener("join", (e) => {
+      document.getElementById("sseJoin").innerText = "join: " + e.data;
+    });
+    es.addEventListener("move", (e) => {
+      document.getElementById("sseMove").innerText = "move: " + e.data;
+    });
+    es.addEventListener("leave", (e) => {
+      document.getElementById("sseLeave").innerText = "leave: " + e.data;
+    });
+    es.addEventListener("reset", (e) => {
+      document.getElementById("sseReset").innerText = "reset: " + e.data;
+    });
   </script>
 </body>
 </html>
