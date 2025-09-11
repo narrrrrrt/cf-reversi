@@ -9,7 +9,9 @@
 
   <!-- 共通エリア -->
   <div id="responseArea">Response: </div>
-  <div id="tokenArea">Token: </div>
+  <div id="blackTokenArea">Black Token: </div>
+  <div id="whiteTokenArea">White Token: </div>
+  <div id="observerTokenArea">Observer Token: </div>
 
   <hr>
 
@@ -25,11 +27,11 @@
     <label>Y:</label>
     <select id="blackY"></select>
     <button onclick="moveGet()">Move</button>
-    <span>/1/move?token=&lt;token&gt;&x=&lt;x&gt;&y=&lt;y&gt;</span>
+    <span>/1/move?token=&lt;blackToken&gt;&x=&lt;x&gt;&y=&lt;y&gt;</span>
   </div>
   <div>
     <button onclick="leaveGet()">Leave</button>
-    <span>/1/leave?token=&lt;token&gt;</span>
+    <span>/1/leave?token=&lt;blackToken&gt;</span>
   </div>
 
   <hr>
@@ -46,11 +48,11 @@
     <label>Y:</label>
     <select id="whiteY"></select>
     <button onclick="movePost()">Move</button>
-    <span>POST /1/move body: { token:"&lt;token&gt;", x:&lt;x&gt;, y:&lt;y&gt; }</span>
+    <span>POST /1/move body: { token:"&lt;whiteToken&gt;", x:&lt;x&gt;, y:&lt;y&gt; }</span>
   </div>
   <div>
     <button onclick="leavePost()">Leave</button>
-    <span>POST /1/leave body: { token:"&lt;token&gt;" }</span>
+    <span>POST /1/leave body: { token:"&lt;whiteToken&gt;" }</span>
   </div>
 
   <hr>
@@ -63,7 +65,7 @@
   </div>
   <div>
     <button onclick="leavePost()">Leave</button>
-    <span>POST /1/leave body: { token:"&lt;token&gt;" }</span>
+    <span>POST /1/leave body: { token:"&lt;observerToken&gt;" }</span>
   </div>
 
   <hr>
@@ -78,7 +80,10 @@
 
   <script>
     const id = "1"; // ★ 今は固定で Room 1
-    let token = null;
+
+    let blackToken = null;
+    let whiteToken = null;
+    let observerToken = null;
 
     async function handleResponse(res) {
       let rawText = "";
@@ -94,9 +99,20 @@
       document.getElementById("responseArea").innerText =
         "Response: " + rawText + " (status " + res.status + ")";
 
-      if (parsed && parsed.token) {
-        token = parsed.token;
-        document.getElementById("tokenArea").innerText = "Token: " + token;
+      if (parsed && parsed.token && parsed.role) {
+        if (parsed.role === "black") {
+          blackToken = parsed.token;
+          document.getElementById("blackTokenArea").innerText =
+            "Black Token: " + blackToken;
+        } else if (parsed.role === "white") {
+          whiteToken = parsed.token;
+          document.getElementById("whiteTokenArea").innerText =
+            "White Token: " + whiteToken;
+        } else if (parsed.role === "observer") {
+          observerToken = parsed.token;
+          document.getElementById("observerTokenArea").innerText =
+            "Observer Token: " + observerToken;
+        }
       }
     }
 
@@ -110,13 +126,13 @@
     async function moveGet() {
       const x = document.getElementById("blackX").value;
       const y = document.getElementById("blackY").value;
-      const endpoint = `/${id}/move?token=${token}&x=${x}&y=${y}`;
+      const endpoint = `/${id}/move?token=${blackToken}&x=${x}&y=${y}`;
       const res = await fetch(endpoint);
       await handleResponse(res);
     }
 
     async function leaveGet() {
-      const endpoint = `/${id}/leave?token=${token}`;
+      const endpoint = `/${id}/leave?token=${blackToken}`;
       const res = await fetch(endpoint);
       await handleResponse(res);
     }
@@ -137,7 +153,7 @@
       const x = document.getElementById("whiteX").value;
       const y = document.getElementById("whiteY").value;
       const endpoint = `/${id}/move`;
-      const body = { token, x, y };
+      const body = { token: whiteToken, x, y };
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -148,7 +164,8 @@
 
     async function leavePost() {
       const endpoint = `/${id}/leave`;
-      const body = { token };
+      // Observer と White の両方で利用できる
+      const body = { token: whiteToken || observerToken };
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
