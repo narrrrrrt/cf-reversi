@@ -1,148 +1,173 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <title>Reversi Room</title>
-  <style>
-    .action-row { margin: 8px 0; }
-    .url { margin-left: 10px; color: gray; font-family: monospace; font-size: 0.9em; display:block; }
-    #sseOutput { margin-top: 1em; padding: 0.5em; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; }
-  </style>
 </head>
 <body>
   <h1>Reversi Room</h1>
-  <div id="status">Not joined yet</div>
-  <div id="token">Token: (not issued)</div>
 
-  <div id="controls"></div>
-  <div id="sseOutput"></div>
+  <!-- 共通エリア -->
+  <div id="responseArea">Response: </div>
+  <div id="tokenArea">Token: </div>
+
+  <hr>
+
+  <!-- Black (GET) -->
+  <h2>Black (GET)</h2>
+  <div>
+    <button onclick="joinGet('black')">Join</button>
+    <span>/1/join?seat=black</span>
+  </div>
+  <div>
+    <label>X:</label>
+    <select id="blackX"></select>
+    <label>Y:</label>
+    <select id="blackY"></select>
+    <button onclick="moveGet()">Move</button>
+    <span>/1/move?token=&lt;token&gt;&x=&lt;x&gt;&y=&lt;y&gt;</span>
+  </div>
+  <div>
+    <button onclick="leaveGet()">Leave</button>
+    <span>/1/leave?token=&lt;token&gt;</span>
+  </div>
+
+  <hr>
+
+  <!-- White (POST) -->
+  <h2>White (POST)</h2>
+  <div>
+    <button onclick="joinPost('white')">Join</button>
+    <span>POST /1/join body: { seat:"white" }</span>
+  </div>
+  <div>
+    <label>X:</label>
+    <select id="whiteX"></select>
+    <label>Y:</label>
+    <select id="whiteY"></select>
+    <button onclick="movePost()">Move</button>
+    <span>POST /1/move body: { token:"&lt;token&gt;", x:&lt;x&gt;, y:&lt;y&gt; }</span>
+  </div>
+  <div>
+    <button onclick="leavePost()">Leave</button>
+    <span>POST /1/leave body: { token:"&lt;token&gt;" }</span>
+  </div>
+
+  <hr>
+
+  <!-- Observer (POST) -->
+  <h2>Observer (POST)</h2>
+  <div>
+    <button onclick="joinPost('observer')">Join</button>
+    <span>POST /1/join body: { seat:"observer" }</span>
+  </div>
+  <div>
+    <button onclick="leavePost()">Leave</button>
+    <span>POST /1/leave body: { token:"&lt;token&gt;" }</span>
+  </div>
+
+  <hr>
+
+  <!-- SSE -->
+  <h2>SSE</h2>
+  <div id="sseArea">SSE: </div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const roomId = params.get("id");
-    const mode   = params.get("mode"); // "play" or "observer"
+    const id = "1"; // ★ 今は固定で Room 1
+
     let token = null;
 
-    const controls = document.getElementById("controls");
-
-    // --- SSE ---
-    function connectSSE() {
-      const output = document.getElementById("sseOutput");
-      output.innerHTML = "<b>SSE connected...</b><br>";
-
-      const es = new EventSource(`/${roomId}/sse`);
-      es.onmessage = (e) => {
-        const msg = document.createElement("div");
-        msg.textContent = e.data;
-        output.appendChild(msg);
-      };
-      es.onerror = () => {
-        const msg = document.createElement("div");
-        msg.style.color = "red";
-        msg.textContent = "[SSE error]";
-        output.appendChild(msg);
-        es.close();
-      };
-    }
-
-    // --- Play Mode (Black/White) ---
-    async function joinWhite() {
-      const res = await fetch(`/${roomId}/join`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seat: "white" })
-      });
-      const data = await res.json();
-      if (data.token) {
-        token = data.token;
-        document.getElementById("token").innerHTML = "White Token: " + token;
+    function setResponse(res, status) {
+      document.getElementById("responseArea").innerText =
+        "Response: " + JSON.stringify(res) + " (status " + status + ")";
+      if (res.token) {
+        token = res.token;
+        document.getElementById("tokenArea").innerText = "Token: " + token;
       }
     }
 
-    async function joinBlack() {
-      const res = await fetch(`/${roomId}/join?seat=black`);
-      const data = await res.json();
-      if (data.token) {
-        token = data.token;
-        document.getElementById("token").innerHTML = "Black Token: " + token;
-      }
-    }
-
-    async function movePost() {
-      if (!token) { alert("No token"); return; }
-      const res = await fetch(`/${roomId}/move`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ x: 3, y: 4, token })
-      });
-      const data = await res.json();
-      document.getElementById("token").innerHTML = JSON.stringify(data);
+    // --- Black (GET) ---
+    async function joinGet(seat) {
+      const endpoint = `/${id}/join?seat=${seat}`;
+      const res = await fetch(endpoint);
+      const json = await res.json();
+      setResponse(json, res.status);
     }
 
     async function moveGet() {
-      if (!token) { alert("No token"); return; }
-      const res = await fetch(`/${roomId}/move?x=3&y=4&token=${token}`);
-      const data = await res.json();
-      document.getElementById("token").innerHTML = JSON.stringify(data);
-    }
-
-    async function leavePost() {
-      if (!token) { alert("No token"); return; }
-      const res = await fetch(`/${roomId}/leave`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token })
-      });
-      const data = await res.json();
-      document.getElementById("token").innerHTML = JSON.stringify(data);
+      const x = document.getElementById("blackX").value;
+      const y = document.getElementById("blackY").value;
+      const endpoint = `/${id}/move?token=${token}&x=${x}&y=${y}`;
+      const res = await fetch(endpoint);
+      const json = await res.json();
+      setResponse(json, res.status);
     }
 
     async function leaveGet() {
-      if (!token) { alert("No token"); return; }
-      const res = await fetch(`/${roomId}/leave?token=${token}`);
-      const data = await res.json();
-      document.getElementById("token").innerHTML = JSON.stringify(data);
+      const endpoint = `/${id}/leave?token=${token}`;
+      const res = await fetch(endpoint);
+      const json = await res.json();
+      setResponse(json, res.status);
     }
 
-    // --- Observer Mode ---
-    async function joinObserver() {
-      const res = await fetch(`/${roomId}/join`, {
+    // --- White / Observer (POST) ---
+    async function joinPost(seat) {
+      const endpoint = `/${id}/join`;
+      const body = { seat };
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seat: "observer" })
+        body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (data.token) {
-        token = data.token;
-        document.getElementById("token").innerHTML = "Observer Token: " + token;
+      const json = await res.json();
+      setResponse(json, res.status);
+    }
+
+    async function movePost() {
+      const x = document.getElementById("whiteX").value;
+      const y = document.getElementById("whiteY").value;
+      const endpoint = `/${id}/move`;
+      const body = { token, x, y };
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      setResponse(json, res.status);
+    }
+
+    async function leavePost() {
+      const endpoint = `/${id}/leave`;
+      const body = { token };
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      setResponse(json, res.status);
+    }
+
+    // --- セレクトボックスに 1〜8 をセット ---
+    function initSelect(id) {
+      const el = document.getElementById(id);
+      for (let i = 1; i <= 8; i++) {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.text = i;
+        el.add(opt);
       }
     }
+    initSelect("blackX"); initSelect("blackY");
+    initSelect("whiteX"); initSelect("whiteY");
 
-    async function leaveObserver() {
-      if (!token) { alert("No token"); return; }
-      const res = await fetch(`/${roomId}/leave?token=${token}`);
-      const data = await res.json();
-      document.getElementById("token").innerHTML = JSON.stringify(data);
-    }
-
-    // --- Render buttons depending on mode ---
-    if (mode === "play") {
-      controls.innerHTML = `
-        <div class="action-row"><button onclick="joinWhite()">Join White (POST)</button></div>
-        <div class="action-row"><button onclick="joinBlack()">Join Black (GET)</button></div>
-        <div class="action-row"><button onclick="movePost()">Move (POST)</button></div>
-        <div class="action-row"><button onclick="moveGet()">Move (GET)</button></div>
-        <div class="action-row"><button onclick="leavePost()">Leave (POST)</button></div>
-        <div class="action-row"><button onclick="leaveGet()">Leave (GET)</button></div>
-        <div class="action-row"><button onclick="connectSSE()">Connect SSE</button></div>
-      `;
-    } else if (mode === "observer") {
-      controls.innerHTML = `
-        <div class="action-row"><button onclick="joinObserver()">Join as Observer (POST)</button></div>
-        <div class="action-row"><button onclick="leaveObserver()">Leave as Observer (GET)</button></div>
-        <div class="action-row"><button onclick="connectSSE()">Connect SSE</button></div>
-      `;
-    }
+    // --- SSE 接続 ---
+    const es = new EventSource(`/${id}/sse`);
+    es.onmessage = (e) => {
+      document.getElementById("sseArea").innerText =
+        "SSE: " + e.data;
+    };
   </script>
 </body>
 </html>
