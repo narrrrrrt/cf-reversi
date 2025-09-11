@@ -73,6 +73,8 @@ export function move(_: Room, x: number, y: number, token: string): MoveResult {
 
   // 新しい合法手をマーク
   _.boardData = _.legalBoard(_.status as "black" | "white");
+  
+  _.updateLastUpdate(token); // ★ 最終操作時刻を更新
 
   return { ok: true };
 }

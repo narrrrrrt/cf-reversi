@@ -7,6 +7,7 @@ const importers: Record<string, () => Promise<any>> = {
   move:  () => import("../methods/move"),
   leave: () => import("../methods/leave"),
   reset: () => import("../methods/reset"),
+  hb:    () => import("../methods/hb"),
 };
 
 // === Coreのメイン関数 ===

@@ -13,3 +13,7 @@ class_name = "RoomDO"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomDO"]
+
+[vars]
+HEARTBEAT_TIMEOUT = "30000"     # ハートビート (ms)
+LASTUPDATE_TIMEOUT = "300000"  # ラストアップデート (ms)

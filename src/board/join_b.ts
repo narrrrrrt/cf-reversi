@@ -23,6 +23,10 @@ export function join(_: Room, token: string, seat: Seat): Seat {
     _.status = "waiting";
     _.boardData = _.defaultBoard();
   }
+  
+  // ★ join 成功したので lastUpdate を更新
+  _.updateLastUpdate(token);
+
 
   return seat;
 }
