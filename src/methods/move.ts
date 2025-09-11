@@ -8,10 +8,9 @@ export async function moveHandler(
 ): Promise<MethodResult> {
   const { x, y, token } = params as { x: number; y: number; token: string };
 
-  // 初期の応答オブジェクト
   const response: any = { ok: false };
   let statusCode = 200;
-  let broadcast: any = null;
+  let broadcast: any = undefined; // ★ null ではなく undefined
 
   if (!token) {
     response.error = "Missing token";
@@ -20,7 +19,6 @@ export async function moveHandler(
     const result = move(_, x, y, token);
 
     if (!result.ok) {
-      // 理由ごとにエラー内容を設定
       switch (result.reason) {
         case "token_mismatch":
           response.error = "Not a player"; // 200 のまま
@@ -38,7 +36,6 @@ export async function moveHandler(
           statusCode = 400;
       }
     } else {
-      // 成功
       await _.save();
       response.ok = true;
       response.step = _.step;
@@ -53,9 +50,8 @@ export async function moveHandler(
     }
   }
 
-  // return は最後に一箇所
   return {
-    broadcast,
+    ...(broadcast ? { broadcast } : {}), // ★ 成功時のみ broadcast を含める
     response,
     status: statusCode,
   };
