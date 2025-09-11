@@ -7,6 +7,14 @@
 <body>
   <h1>Reversi Room</h1>
 
+  <!-- Reset -->
+  <div>
+    <button onclick="resetRoom()">Reset</button>
+    <span>GET /1/reset</span>
+  </div>
+
+  <hr>
+
   <!-- 共通エリア -->
   <div id="responseArea">Response: </div>
   <div id="blackTokenArea">Black Token: </div>
@@ -116,6 +124,20 @@
       }
     }
 
+    // --- Reset (GET) ---
+    async function resetRoom() {
+      const endpoint = `/${id}/reset`;
+      const res = await fetch(endpoint);
+      await handleResponse(res);
+      // トークンもリセット
+      blackToken = null;
+      whiteToken = null;
+      observerToken = null;
+      document.getElementById("blackTokenArea").innerText = "Black Token: ";
+      document.getElementById("whiteTokenArea").innerText = "White Token: ";
+      document.getElementById("observerTokenArea").innerText = "Observer Token: ";
+    }
+
     // --- Black (GET) ---
     async function joinGet(seat) {
       const endpoint = `/${id}/join?seat=${seat}`;
@@ -164,7 +186,6 @@
 
     async function leavePost() {
       const endpoint = `/${id}/leave`;
-      // Observer と White の両方で利用できる
       const body = { token: whiteToken || observerToken };
       const res = await fetch(endpoint, {
         method: "POST",
