@@ -14,6 +14,8 @@ export async function resetHandler(
       status: _.status,
       step: _.step,
       board: _.boardData,
+      black: !!_.black,
+      white: !!_.white,
     },
     response: {
       ok: true,
