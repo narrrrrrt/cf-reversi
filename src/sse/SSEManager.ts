@@ -3,6 +3,9 @@ import { SSEMessage } from "../core/Types";
 export class SSEManager {
   private connections: Set<WritableStreamDefaultWriter>;
   private initPayload?: SSEMessage;
+  private queue: string[] = [];           // ★ メッセージキュー
+  private flushing = false;               // ★ flush 中かどうか
+  private pulseTimer?: NodeJS.Timer;      // ★ pulse タイマー保持
 
   constructor(initPayload?: SSEMessage) {
     this.connections = new Set();
@@ -11,7 +14,7 @@ export class SSEManager {
     // ★ ここで定期 pulse をセット（例: 30 秒ごと）
     this.pulseTimer = setInterval(() => {
       if (this.connections.size > 0) {
-        this.broadcast({ event: "pulse", data: {} });
+        this.enqueue({ event: "pulse", data: {} });
       }
     }, 30000); 
   }
@@ -22,13 +25,11 @@ export class SSEManager {
 
     // 接続直後に初回イベントを送信（あれば）
     if (this.initPayload) {
-      const encoder = new TextEncoder();
       const msg =
         `event: ${this.initPayload.event}\n` +
         `data: ${JSON.stringify(this.initPayload.data ?? {})}\n\n`;
-      writer.write(encoder.encode(msg)).catch(() => {
-        this.removeConnection(writer);
-      });
+      this.queue.push(msg);
+      this.flush();
     }
   }
 
@@ -42,23 +43,44 @@ export class SSEManager {
     this.connections.delete(writer);
   }
 
-  // 全クライアントにメッセージを配信
-  async broadcast(payload: SSEMessage) {
+  // ★ enqueue: メッセージをキューに積む
+  enqueue(payload: SSEMessage) {
     const msg =
       `event: ${payload.event}\n` +
       `data: ${JSON.stringify(payload.data ?? {})}\n\n`;
+    this.queue.push(msg);
+    this.flush();
+  }
+
+  // ★ flush: キューを順番に処理する
+  private async flush() {
+    if (this.flushing) return; // 既に flush 中ならスキップ
+    this.flushing = true;
 
     const encoder = new TextEncoder();
-    const bytes = encoder.encode(msg);
 
-    const toRemove: WritableStreamDefaultWriter[] = [];
-    for (const w of this.connections) {
-      try {
-        await w.write(bytes);
-      } catch {
-        toRemove.push(w);
+    while (this.queue.length > 0) {
+      const msg = this.queue.shift()!;
+      const bytes = encoder.encode(msg);
+
+      const toRemove: WritableStreamDefaultWriter[] = [];
+      for (const w of this.connections) {
+        try {
+          await w.write(bytes);
+        } catch {
+          toRemove.push(w);
+        }
       }
+      for (const w of toRemove) this.removeConnection(w);
     }
-    for (const w of toRemove) this.removeConnection(w);
+
+    this.flushing = false;
+  }
+
+  // ★ 明示的に pulse を止めたいとき
+  stopPulse() {
+    if (this.pulseTimer) {
+      clearInterval(this.pulseTimer);
+    }
   }
 }
