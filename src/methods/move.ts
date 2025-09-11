@@ -1,5 +1,5 @@
 import { Room } from "../core/Room";
-import { MethodResult } from "../core/Types";
+import { MethodResult, ResponsePayload } from "../core/Types";
 import { move } from "../board/move_b";
 
 export async function moveHandler(
@@ -8,9 +8,9 @@ export async function moveHandler(
 ): Promise<MethodResult> {
   const { x, y, token } = params as { x: number; y: number; token: string };
 
-  const response: any = { ok: false };
+  const response: ResponsePayload = { ok: false };
   let statusCode = 200;
-  let broadcast: any = undefined; // ★ null ではなく undefined
+  let broadcast: any = undefined;
 
   if (!token) {
     response.error = "Missing token";
@@ -21,7 +21,7 @@ export async function moveHandler(
     if (!result.ok) {
       switch (result.reason) {
         case "token_mismatch":
-          response.error = "Not a player"; // 200 のまま
+          response.error = "Not a player";
           break;
         case "illegal_pass":
           response.error = "Illegal pass";
@@ -44,14 +44,14 @@ export async function moveHandler(
         event: "move",
         status: _.status,
         step: _.step,
-        board: _.board(),
+        board: _.boardData, // ★ プロパティを返す
         token,
       };
     }
   }
 
   return {
-    ...(broadcast ? { broadcast } : {}), // ★ 成功時のみ broadcast を含める
+    ...(broadcast ? { broadcast } : {}),
     response,
     status: statusCode,
   };
