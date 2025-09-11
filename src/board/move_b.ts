@@ -1,18 +1,16 @@
 import { Room } from "../core/Room";
+import { MoveResult } from "../core/Types";
 
 /**
  * move
  * Room.move() の本体を外出ししたもの
- * @param _ Room インスタンス
- * @param x X座標 (0-7)
- * @param y Y座標 (0-7)
- * @param token プレイヤートークン
- * @returns 成功したら true、無効手なら false
  */
-export function move(_: Room, x: number, y: number, token: string): boolean {
+export function move(_: Room, x: number, y: number, token: string): MoveResult {
   const size = 8;
   const me = (_.black === token) ? "B" : (_.white === token) ? "W" : null;
-  if (!me) return false; // プレイヤーじゃなければ無効
+  if (!me) {
+    return { ok: false, reason: "token_mismatch" }; // ★ トークン不一致
+  }
 
   const opp = me === "B" ? "W" : "B";
   const board = _.boardData.map(r => r.split("")); // 2次元配列に変換
@@ -22,19 +20,18 @@ export function move(_: Room, x: number, y: number, token: string): boolean {
   if (isCenter) {
     const hasLegal = _.boardData.some(row => row.includes("*"));
     if (!hasLegal) {
-      // パス成立
       _.status = me === "B" ? "white" : "black"; // ターン交代
       _.step++;
       _.boardData = _.legalBoard(_.status as "black" | "white");
-      return true;
+      return { ok: true };
     } else {
-      return false; // 合法手があるのに中央タップ → 無効
+      return { ok: false, reason: "illegal_pass" }; // 合法手があるのに中央
     }
   }
 
   // --- 通常の着手処理 ---
   if (board[y][x] !== "*") {
-    return false; // 合法手じゃない
+    return { ok: false, reason: "invalid_move" }; // 合法手じゃない
   }
 
   // 石を置く
@@ -60,7 +57,7 @@ export function move(_: Room, x: number, y: number, token: string): boolean {
       }
       if (board[ny][nx] === me && toFlip.length > 0) {
         for (const [fx, fy] of toFlip) {
-          board[fy][fx] = me; // 裏返す
+          board[fy][fx] = me;
         }
       }
       break;
@@ -77,5 +74,5 @@ export function move(_: Room, x: number, y: number, token: string): boolean {
   // 新しい合法手をマーク
   _.boardData = _.legalBoard(_.status as "black" | "white");
 
-  return true;
+  return { ok: true };
 }

@@ -1,5 +1,6 @@
 import { Room } from "../core/Room";
 import { MethodResult } from "../core/Types";
+import { move } from "../board/move_b";
 
 export async function moveHandler(
   _: Room,
@@ -7,36 +8,55 @@ export async function moveHandler(
 ): Promise<MethodResult> {
   const { x, y, token } = params as { x: number; y: number; token: string };
 
-  // ★ トークンが無ければエラー
+  // 初期の応答オブジェクト
+  const response: any = { ok: false };
+  let statusCode = 200;
+  let broadcast: any = null;
+
   if (!token) {
-    return {
-      response: { ok: false, error: "Missing token" },
-      status: 400,
-    };
+    response.error = "Missing token";
+    statusCode = 400;
+  } else {
+    const result = move(_, x, y, token);
+
+    if (!result.ok) {
+      // 理由ごとにエラー内容を設定
+      switch (result.reason) {
+        case "token_mismatch":
+          response.error = "Not a player"; // 200 のまま
+          break;
+        case "illegal_pass":
+          response.error = "Illegal pass";
+          statusCode = 400;
+          break;
+        case "invalid_move":
+          response.error = "Invalid move";
+          statusCode = 400;
+          break;
+        default:
+          response.error = "Unknown error";
+          statusCode = 400;
+      }
+    } else {
+      // 成功
+      await _.save();
+      response.ok = true;
+      response.step = _.step;
+
+      broadcast = {
+        event: "move",
+        status: _.status,
+        step: _.step,
+        board: _.board(),
+        token,
+      };
+    }
   }
 
-  const ok = _.move(x, y, token); // ← board/move_b.ts 側でバリデーションする
-  await _.save();
-
-  if (!ok) {
-    return {
-      response: { ok: false, error: "Invalid move" },
-      status: 400,
-    };
-  }
-
+  // return は最後に一箇所
   return {
-    broadcast: {
-      event: "move",
-      status: _.status,
-      step: _.step,
-      board: _.boardData,
-      token,
-    },
-    response: {
-      ok: true,
-      step: _.step,
-    },
-    status: 200,
+    broadcast,
+    response,
+    status: statusCode,
   };
 }
