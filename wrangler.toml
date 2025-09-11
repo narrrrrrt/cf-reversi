@@ -2,6 +2,8 @@ name = "ive"
 main = "src/index.ts"
 compatibility_date = "2025-09-06"
 
+compatibility_flags = ["durable_object_alarms"]
+
 [assets]
 directory = "./public"
 binding = "ASSETS"
