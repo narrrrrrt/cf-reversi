@@ -116,7 +116,7 @@ export class Room {
   }
 
   // --- heartbeat 用 ---
-  updateHeartbeatj(token: string) {
+  updateHeartbeat(token: string) {
     const rec = this.activity.get(token);
     if (rec) {
       rec.hb = Date.now();
