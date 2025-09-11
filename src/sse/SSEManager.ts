@@ -10,13 +10,13 @@ export class SSEManager {
   constructor(initPayload?: SSEMessage) {
     this.connections = new Set();
     this.initPayload = initPayload;
-    
-    // ★ ここで定期 pulse をセット（例: 30 秒ごと）
+
+    // ★ 定期 pulse をセット（例: 30 秒ごと）
     this.pulseTimer = setInterval(() => {
       if (this.connections.size > 0) {
-        this.enqueue({ event: "pulse", data: {} });
+        this.broadcast({ event: "pulse", data: {} });
       }
-    }, 30000); 
+    }, 30000);
   }
 
   // 新しい SSE 接続を登録
@@ -43,8 +43,8 @@ export class SSEManager {
     this.connections.delete(writer);
   }
 
-  // ★ enqueue: メッセージをキューに積む
-  enqueue(payload: SSEMessage) {
+  // ★ 既存コード用の broadcast（enqueue + flush）
+  broadcast(payload: SSEMessage) {
     const msg =
       `event: ${payload.event}\n` +
       `data: ${JSON.stringify(payload.data ?? {})}\n\n`;
@@ -77,7 +77,7 @@ export class SSEManager {
     this.flushing = false;
   }
 
-  // ★ 明示的に pulse を止めたいとき
+  // ★ 明示的に pulse を止めたいとき用
   stopPulse() {
     if (this.pulseTimer) {
       clearInterval(this.pulseTimer);
