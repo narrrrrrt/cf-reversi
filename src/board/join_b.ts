@@ -7,12 +7,10 @@ export function join(_: Room, token: string, seat: Seat): Seat {
   } else if (seat === "white" && !_.white) {
     _.white = token;
     _.step++;
-  } else if (seat === "observer") {
+  } else {
+    // ★ 黒/白の席が埋まっている or observer 指定
     _.observers.push(token);
     return "observer";
-  } else {
-    // すでに埋まっている席に join しようとした場合
-    return seat;
   }
 
   // ★ 黒白両方揃ったら黒ターンで開始
@@ -23,10 +21,9 @@ export function join(_: Room, token: string, seat: Seat): Seat {
     _.status = "waiting";
     _.boardData = _.defaultBoard();
   }
-  
+
   // ★ join 成功したので lastUpdate を更新
   _.updateLastUpdate(token);
-
 
   return seat;
 }
