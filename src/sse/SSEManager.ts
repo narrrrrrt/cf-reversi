@@ -17,7 +17,8 @@ export class SSEManager {
     // 接続直後に初回イベントを送信（あれば）
     if (this.initPayload) {
       const encoder = new TextEncoder();
-      const msg = JSON.stringify(this.initPayload) + "\n\n";
+      //const msg = JSON.stringify(this.initPayload) + "\n\n";
+      const msg = `data: ${JSON.stringify(this.initPayload)}\n\n`;
       writer.write(encoder.encode(msg)).catch(() => {
         this.removeConnection(writer);
       });
@@ -36,7 +37,8 @@ export class SSEManager {
 
   // 全クライアントにメッセージを配信（JSON & 末尾は \n\n）
   async broadcast(payload: any) {
-    const msg = JSON.stringify(payload) + "\n\n";
+    //const msg = JSON.stringify(payload) + "\n\n";
+    const msg = `data: ${JSON.stringify(payload)}\n\n`;
     const encoder = new TextEncoder();
     const bytes = encoder.encode(msg);
 
