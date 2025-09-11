@@ -9,7 +9,7 @@ export class RoomDO {
 
   constructor(private state: DurableObjectState) {
     // ★ インスタンスごとに1つだけ SSEManager を持つ
-    this.sse = new SSEManager();
+    this.sse = new SSEManager({ event: "init" });
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -24,14 +24,6 @@ export class RoomDO {
           this.state.storage,
           this.sse
         );
-
-        // ★ 初回接続時に init ブロードキャスト
-        this.sse.broadcast({
-          event: "init",
-          status: this.room.status,
-          step: this.room.step,
-          board: this.room.boardData,
-        });
       }
 
       return createSSE(this.sse, request);
