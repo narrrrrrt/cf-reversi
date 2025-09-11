@@ -44,6 +44,7 @@
   <div>
     <button onclick="startHeartbeat('black')">Heartbeat Start</button>
     <button onclick="stopHeartbeat('black')">Heartbeat Stop</button>
+    <div id="blackHbArea">Black HB: </div>
   </div>
 
   <hr>
@@ -63,12 +64,13 @@
     <span>POST /1/move body: { token:"&lt;whiteToken&gt;", x:&lt;x&gt;, y:&lt;y&gt; }</span>
   </div>
   <div>
-    <button onclick="leavePost()">Leave</button>
+    <button onclick="leavePost('white')">Leave</button>
     <span>POST /1/leave body: { token:"&lt;whiteToken&gt;" }</span>
   </div>
   <div>
     <button onclick="startHeartbeat('white')">Heartbeat Start</button>
     <button onclick="stopHeartbeat('white')">Heartbeat Stop</button>
+    <div id="whiteHbArea">White HB: </div>
   </div>
 
   <hr>
@@ -80,12 +82,13 @@
     <span>POST /1/join body: { seat:"observer" }</span>
   </div>
   <div>
-    <button onclick="leavePost()">Leave</button>
+    <button onclick="leavePost('observer')">Leave</button>
     <span>POST /1/leave body: { token:"&lt;observerToken&gt;" }</span>
   </div>
   <div>
     <button onclick="startHeartbeat('observer')">Heartbeat Start</button>
     <button onclick="stopHeartbeat('observer')">Heartbeat Stop</button>
+    <div id="observerHbArea">Observer HB: </div>
   </div>
 
   <hr>
@@ -99,7 +102,7 @@
   <div id="sseReset">reset: </div>
 
   <script>
-    const id = "1"; // 今は固定で Room 1
+    const id = "1"; // 固定: Room 1
 
     let blackToken = null;
     let whiteToken = null;
@@ -126,16 +129,13 @@
       if (parsed && parsed.token && parsed.role) {
         if (parsed.role === "black") {
           blackToken = parsed.token;
-          document.getElementById("blackTokenArea").innerText =
-            "Black Token: " + blackToken;
+          document.getElementById("blackTokenArea").innerText = "Black Token: " + blackToken;
         } else if (parsed.role === "white") {
           whiteToken = parsed.token;
-          document.getElementById("whiteTokenArea").innerText =
-            "White Token: " + whiteToken;
+          document.getElementById("whiteTokenArea").innerText = "White Token: " + whiteToken;
         } else if (parsed.role === "observer") {
           observerToken = parsed.token;
-          document.getElementById("observerTokenArea").innerText =
-            "Observer Token: " + observerToken;
+          document.getElementById("observerTokenArea").innerText = "Observer Token: " + observerToken;
         }
       }
     }
@@ -151,42 +151,115 @@
       document.getElementById("observerTokenArea").innerText = "Observer Token: ";
     }
 
-    // Heartbeat control
+    // --- Black (GET) ---
+    async function joinGet(seat) {
+      const endpoint = `/${id}/join?seat=${seat}`;
+      const res = await fetch(endpoint);
+      await handleResponse(res);
+    }
+
+    async function moveGet() {
+      const x = document.getElementById("blackX").value;
+      const y = document.getElementById("blackY").value;
+      const endpoint = `/${id}/move?token=${blackToken}&x=${x}&y=${y}`;
+      const res = await fetch(endpoint);
+      await handleResponse(res);
+    }
+
+    async function leaveGet() {
+      const endpoint = `/${id}/leave?token=${blackToken}`;
+      const res = await fetch(endpoint);
+      await handleResponse(res);
+      blackToken = null;
+      document.getElementById("blackTokenArea").innerText = "Black Token: ";
+    }
+
+    // --- White / Observer (POST) ---
+    async function joinPost(seat) {
+      const endpoint = `/${id}/join`;
+      const body = { seat };
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      await handleResponse(res);
+    }
+
+    async function movePost() {
+      const x = document.getElementById("whiteX").value;
+      const y = document.getElementById("whiteY").value;
+      const endpoint = `/${id}/move`;
+      const body = { token: whiteToken, x, y };
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      await handleResponse(res);
+    }
+
+    async function leavePost(role) {
+      const endpoint = `/${id}/leave`;
+      const token = role === "white" ? whiteToken : observerToken;
+      const body = { token };
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      await handleResponse(res);
+
+      if (role === "white") {
+        whiteToken = null;
+        document.getElementById("whiteTokenArea").innerText = "White Token: ";
+      } else {
+        observerToken = null;
+        document.getElementById("observerTokenArea").innerText = "Observer Token: ";
+      }
+    }
+
+    // --- Heartbeat control ---
     function startHeartbeat(role) {
       const token = role === "black" ? blackToken : role === "white" ? whiteToken : observerToken;
       if (!token) return alert(`${role} token missing`);
 
       const body = { token };
       const sendHb = async () => {
-        await fetch(`/${id}/hb`, {
+        const res = await fetch(`/${id}/hb`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
+        const text = await res.text();
+        document.getElementById(`${role}HbArea`).innerText = `${role} HB: ${text}`;
       };
 
-      if (role === "black" && !blackHbTimer) {
-        blackHbTimer = setInterval(sendHb, 5000);
-      } else if (role === "white" && !whiteHbTimer) {
-        whiteHbTimer = setInterval(sendHb, 5000);
-      } else if (role === "observer" && !observerHbTimer) {
-        observerHbTimer = setInterval(sendHb, 5000);
-      }
+      if (role === "black" && !blackHbTimer) blackHbTimer = setInterval(sendHb, 5000);
+      if (role === "white" && !whiteHbTimer) whiteHbTimer = setInterval(sendHb, 5000);
+      if (role === "observer" && !observerHbTimer) observerHbTimer = setInterval(sendHb, 5000);
     }
 
     function stopHeartbeat(role) {
-      if (role === "black" && blackHbTimer) {
-        clearInterval(blackHbTimer); blackHbTimer = null;
-      } else if (role === "white" && whiteHbTimer) {
-        clearInterval(whiteHbTimer); whiteHbTimer = null;
-      } else if (role === "observer" && observerHbTimer) {
-        clearInterval(observerHbTimer); observerHbTimer = null;
-      }
+      if (role === "black" && blackHbTimer) { clearInterval(blackHbTimer); blackHbTimer = null; }
+      if (role === "white" && whiteHbTimer) { clearInterval(whiteHbTimer); whiteHbTimer = null; }
+      if (role === "observer" && observerHbTimer) { clearInterval(observerHbTimer); observerHbTimer = null; }
     }
 
-    // ... (joinGet, moveGet, joinPost など既存の関数は省略) ...
+    // --- セレクトボックスに 1〜8 をセット ---
+    function initSelect(id) {
+      const el = document.getElementById(id);
+      for (let i = 1; i <= 8; i++) {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.text = i;
+        el.add(opt);
+      }
+    }
+    initSelect("blackX"); initSelect("blackY");
+    initSelect("whiteX"); initSelect("whiteY");
 
-    // SSE 接続
+    // --- SSE 接続 ---
     const es = new EventSource(`/${id}/sse`);
     es.addEventListener("init", (e) => { document.getElementById("sseInit").innerText = "init: " + e.data; });
     es.addEventListener("join", (e) => { document.getElementById("sseJoin").innerText = "join: " + e.data; });
