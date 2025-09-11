@@ -24,9 +24,9 @@ export class SSEManager {
   }
 
   // 全クライアントにメッセージを配信（JSON & 末尾は \n\n）
-  async broadcast(json: string) {
+  async broadcast(payload: any) {
     const encoder = new TextEncoder();
-    const bytes = encoder.encode(json);
+    const bytes = encoder.encode(JSON.stringify(payload));
 
     const toRemove: WritableStreamDefaultWriter[] = [];
     for (const w of this.connections) {
