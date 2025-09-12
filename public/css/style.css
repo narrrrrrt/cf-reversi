@@ -6,23 +6,19 @@ body {
   margin-bottom: 20px;
 }
 
-button {
+a {
+  display: inline-block;
   margin-right: 8px;
   padding: 6px 12px;
-  font-size: 14px;
+  font-size: 18px;
+  text-decoration: none;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: black;
+  background: #f0f0f0;
 }
 
-button.disabled {
+a.disabled {
   pointer-events: none;
   opacity: 0.5;
-}
-
-#log {
-  margin-top: 20px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  max-height: 200px;
-  overflow-y: auto;
-  font-family: monospace;
-  background: #fafafa;
 }

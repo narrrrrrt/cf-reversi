@@ -8,35 +8,29 @@
 <body>
   <h1>Reversi Lobby</h1>
 
-  <div class="room" id="room1">
-    <h2>Room 1</h2>
-    <button id="room1-black" data-room="1" data-color="black">黒で入室</button>
-    <button id="room1-white" data-room="1" data-color="white">白で入室</button>
-    <a href="room.html?room=1&role=observer">観戦</a>
+  <div id="1" class="room">
+    <a href="/room.html?id=1&seat=black" class="button-black">●</a>
+    <a href="/room.html?id=1&seat=white" class="button-white">○</a>
+    <a href="/room.html?id=1&seat=observer" class="button-observer">観戦</a>
   </div>
 
-  <div class="room" id="room2">
-    <h2>Room 2</h2>
-    <button id="room2-black" data-room="2" data-color="black">黒で入室</button>
-    <button id="room2-white" data-room="2" data-color="white">白で入室</button>
-    <a href="room.html?room=2&role=observer">観戦</a>
+  <div id="2" class="room">
+    <a href="/room.html?id=2&seat=black" class="button-black">●</a>
+    <a href="/room.html?id=2&seat=white" class="button-white">○</a>
+    <a href="/room.html?id=2&seat=observer" class="button-observer">観戦</a>
   </div>
 
-  <div class="room" id="room3">
-    <h2>Room 3</h2>
-    <button id="room3-black" data-room="3" data-color="black">黒で入室</button>
-    <button id="room3-white" data-room="3" data-color="white">白で入室</button>
-    <a href="room.html?room=3&role=observer">観戦</a>
+  <div id="3" class="room">
+    <a href="/room.html?id=3&seat=black" class="button-black">●</a>
+    <a href="/room.html?id=3&seat=white" class="button-white">○</a>
+    <a href="/room.html?id=3&seat=observer" class="button-observer">観戦</a>
   </div>
 
-  <div class="room" id="room4">
-    <h2>Room 4</h2>
-    <button id="room4-black" data-room="4" data-color="black">黒で入室</button>
-    <button id="room4-white" data-room="4" data-color="white">白で入室</button>
-    <a href="room.html?room=4&role=observer">観戦</a>
+  <div id="4" class="room">
+    <a href="/room.html?id=4&seat=black" class="button-black">●</a>
+    <a href="/room.html?id=4&seat=white" class="button-white">○</a>
+    <a href="/room.html?id=4&seat=observer" class="button-observer">観戦</a>
   </div>
-
-  <div id="log"></div>
 
   <script src="js/lobby.js"></script>
 </body>
