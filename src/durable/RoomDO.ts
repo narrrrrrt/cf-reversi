@@ -66,6 +66,15 @@ export class RoomDO {
       if (hbExpired || luExpired) {
         this.room.leave(token);
         this.room.activity.delete(token);
+        
+        this.sse.broadcast({
+          event: "leave",
+          data: {
+            status: this.room.status,
+            black: !!this.room.black,
+            white: !!this.room.white,
+          },
+        }); 
       }
     }
 
