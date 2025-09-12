@@ -67,6 +67,7 @@ export class RoomDO {
         this.room.leave(token);
         this.room.activity.delete(token);
         
+        /*
         this.sse.broadcast({
           event: "leave",
           data: {
@@ -75,6 +76,7 @@ export class RoomDO {
             white: !!this.room.white,
           },
         }); 
+        */
       }
     }
 
