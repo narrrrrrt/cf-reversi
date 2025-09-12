@@ -36,5 +36,5 @@ export function leave(_: Room, token: string): void {
     return;
   }
 
-  // 見つからなければ noop（ハンドラー側でエラー返却）
+  _.scheduleAlarm();
 }

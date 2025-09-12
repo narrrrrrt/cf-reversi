@@ -26,6 +26,8 @@ export class Room {
   activity: Map<string, { hb: number; lu: number }> = new Map();
 
   private storage: DurableObjectStorage;
+  // ★ DurableObjectState を保持（アラーム制御に必要）
+  private state: DurableObjectState; 
 
   constructor(
     id: string,
@@ -106,21 +108,33 @@ export class Room {
     return legalBoard(this, turn);  // ★ 外出しメソッド呼び出し
   }
 
-  // --- move() などで呼ぶ ---
-  updateLastUpdate(token: string) {
+  // --- LU/HB 共通更新メソッド ---
+  private updateActivity(token: string, field: "hb" | "lu") {
     const rec = this.activity.get(token);
     if (rec) {
-      rec.lu = Date.now();
+      rec[field] = Date.now();
       this.activity.set(token, rec);
+      this.scheduleAlarm();   // ★ アクティビティ更新時にアラームを仕掛ける
     }
   }
 
-  // --- heartbeat 用 ---
+  // --- 公開メソッド（既存の呼び出し互換） ---
+  updateLastUpdate(token: string) {
+    this.updateActivity(token, "lu");
+  }
+
   updateHeartbeat(token: string) {
-    const rec = this.activity.get(token);
-    if (rec) {
-      rec.hb = Date.now();
-      this.activity.set(token, rec);
+    this.updateActivity(token, "hb");
+  }
+
+  // --- アラーム制御（内部ユーティリティ） ---
+  private async scheduleAlarm() {
+    if (this.activity.size > 0) {
+      await this.state.storage.setAlarm(Date.now() + 5000);
+    } else {
+      // 誰もいなければアラームを解除
+      await this.state.storage.setAlarm(null);
     }
   }
+}
 }
