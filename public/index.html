@@ -3,81 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <title>Reversi Lobby</title>
-  <style>
-    .room {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin: 10px 0;
-    }
-    .buttons a {
-      margin-right: 10px;
-    }
-  </style>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <h1>Reversi Lobby</h1>
 
-  <!-- Room 1 -->
-  <div class="room">
+  <div class="room" id="room1">
     <h2>Room 1</h2>
-    <div class="buttons">
-      <a href="room.html?id=1&seat=black">Black</a>
-      <a href="room.html?id=1&seat=white">White</a>
-      <a href="room.html?id=1&seat=observer">Observer</a>
-    </div>
-    <div id="join1">Join: </div>
-    <div id="leave1">Leave: </div>
+    <button id="room1-black" data-room="1" data-color="black">黒で入室</button>
+    <button id="room1-white" data-room="1" data-color="white">白で入室</button>
+    <a href="room.html?room=1&role=observer">観戦</a>
   </div>
 
-  <!-- Room 2 -->
-  <div class="room">
+  <div class="room" id="room2">
     <h2>Room 2</h2>
-    <div class="buttons">
-      <a href="room.html?id=2&seat=black">Black</a>
-      <a href="room.html?id=2&seat=white">White</a>
-      <a href="room.html?id=2&seat=observer">Observer</a>
-    </div>
-    <div id="join2">Join: </div>
-    <div id="leave2">Leave: </div>
+    <button id="room2-black" data-room="2" data-color="black">黒で入室</button>
+    <button id="room2-white" data-room="2" data-color="white">白で入室</button>
+    <a href="room.html?room=2&role=observer">観戦</a>
   </div>
 
-  <!-- Room 3 -->
-  <div class="room">
+  <div class="room" id="room3">
     <h2>Room 3</h2>
-    <div class="buttons">
-      <a href="room.html?id=3&seat=black">Black</a>
-      <a href="room.html?id=3&seat=white">White</a>
-      <a href="room.html?id=3&seat=observer">Observer</a>
-    </div>
-    <div id="join3">Join: </div>
-    <div id="leave3">Leave: </div>
+    <button id="room3-black" data-room="3" data-color="black">黒で入室</button>
+    <button id="room3-white" data-room="3" data-color="white">白で入室</button>
+    <a href="room.html?room=3&role=observer">観戦</a>
   </div>
 
-  <!-- Room 4 -->
-  <div class="room">
+  <div class="room" id="room4">
     <h2>Room 4</h2>
-    <div class="buttons">
-      <a href="room.html?id=4&seat=black">Black</a>
-      <a href="room.html?id=4&seat=white">White</a>
-      <a href="room.html?id=4&seat=observer">Observer</a>
-    </div>
-    <div id="join4">Join: </div>
-    <div id="leave4">Leave: </div>
+    <button id="room4-black" data-room="4" data-color="black">黒で入室</button>
+    <button id="room4-white" data-room="4" data-color="white">白で入室</button>
+    <a href="room.html?room=4&role=observer">観戦</a>
   </div>
 
-  <script>
-    // 4つの部屋に対して SSE を張る
-    for (let i = 1; i <= 4; i++) {
-      const es = new EventSource(`/${i}/sse`);
+  <div id="log"></div>
 
-      es.addEventListener("join", (e) => {
-        document.getElementById(`join${i}`).innerText = "Join: " + e.data;
-      });
-
-      es.addEventListener("leave", (e) => {
-        document.getElementById(`leave${i}`).innerText = "Leave: " + e.data;
-      });
-    }
-  </script>
+  <script src="js/lobby.js"></script>
 </body>
 </html>
