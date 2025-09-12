@@ -1,0 +1,28 @@
+body {
+  font-family: sans-serif;
+}
+
+.room {
+  margin-bottom: 20px;
+}
+
+button {
+  margin-right: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+button.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+#log {
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: monospace;
+  background: #fafafa;
+}
