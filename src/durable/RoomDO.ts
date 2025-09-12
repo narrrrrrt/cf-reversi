@@ -1,4 +1,4 @@
-import { Room } from "../core/Room"; 
+import { Room } from "../core/Room";
 import { handleAction } from "../core/Core";
 import { SSEManager } from "../sse/SSEManager";
 import { createSSE } from "../sse/SSE";
