@@ -1,6 +1,5 @@
 // === 型定義 ===
-export type Status = "waiting" | "black" | "white" | "leave" | "finished";
-export type Seat   = "black" | "white" | "observer";
+import { Seat, Status } from "./Types";
 import { legalBoard } from "../board/legalBoard";
 
 // === 外出しメソッドをインポート ===
@@ -22,6 +21,9 @@ export class Room {
   step: number = 0;
 
   sse: SSEManager; // ★ 部屋ごとに1つの SSE 管理オブジェクト
+  
+  // ★ 追加: activity (token → hb/lu)
+  activity: Map<string, { hb: number; lu: number }> = new Map();
 
   private storage: DurableObjectStorage;
 
@@ -102,5 +104,23 @@ export class Room {
    */
   legalBoard(turn: "black" | "white"): string[] {
     return legalBoard(this, turn);  // ★ 外出しメソッド呼び出し
+  }
+
+  // --- move() などで呼ぶ ---
+  updateLastUpdate(token: string) {
+    const rec = this.activity.get(token);
+    if (rec) {
+      rec.lu = Date.now();
+      this.activity.set(token, rec);
+    }
+  }
+
+  // --- heartbeat 用 ---
+  updateHeartbeat(token: string) {
+    const rec = this.activity.get(token);
+    if (rec) {
+      rec.hb = Date.now();
+      this.activity.set(token, rec);
+    }
   }
 }

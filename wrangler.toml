@@ -1,6 +1,8 @@
 name = "ive"
 main = "src/index.ts"
-compatibility_date = "2025-09-06"
+compatibility_date = "2023-11-01"
+
+compatibility_flags = ["durable_object_alarms"]
 
 [assets]
 directory = "./public"
@@ -13,3 +15,7 @@ class_name = "RoomDO"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomDO"]
+
+[vars]
+HEARTBEAT_TIMEOUT = "30000"     # ハートビート (ms)
+LASTUPDATE_TIMEOUT = "300000"  # ラストアップデート (ms)

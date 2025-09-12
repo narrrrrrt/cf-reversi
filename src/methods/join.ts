@@ -1,9 +1,9 @@
 import { Room, Seat } from "../core/Room";
-import { MethodResult } from "../core/Types";
+import { MethodResult, SSEMessage } from "../core/Types";
 
-// ★ ここで1行だけ関数として用意
+// ★ 1行関数で token 生成
 function generateToken(): string {
-  return Math.random().toString(36).slice(2, 10); // 8文字の英数字
+  return Math.random().toString(36).slice(2, 10); // 8文字英数字
 }
 
 export async function joinHandler(
@@ -12,25 +12,34 @@ export async function joinHandler(
 ): Promise<MethodResult> {
   const { seat } = params as { seat: Seat };
 
-  // ★ 生成関数をそのまま join に渡す
-  const role: Seat = _.join(generateToken(), seat);
+  // token を生成
+  const token = generateToken();
+
+  // ★ Room.join に渡して role を確定
+  const role: Seat = _.join(token, seat);
   await _.save();
 
-  return {
-    broadcast: {
-      event: "join",
-      status: _.status,
-      step: _.step,
-      board: _.boardData,
-      black: !!_.black,
-      white: !!_.white,
+  // broadcast は SSEMessage 型に統一
+  const broadcast: SSEMessage = {
+    event: "join",
+    data: {
+      status: _.status,       // 1. status
+      step: _.step,           // 2. step
+      role,                   // 3. role（join 時のみ）
+      black: !!_.black,       // 4. black occupancy
+      white: !!_.white,       // 5. white occupancy
+      board: _.boardData,     // 6. board
     },
+  };
+
+  return {
+    broadcast,
     response: {
-      ok: true,
-      role,
-      // join で実際に割り当てられた token を返す
-      token: _[role === "black" ? "black" : role === "white" ? "white" : "observers"].toString(),
-      step: _.step,
+      ok: true,    // 1. ok
+      step: _.step, // 2. step
+      error: undefined, // 3. error（成功時は空）
+      role,       // 4. role
+      token,      // 5. token（join で払い出した）
     },
   };
 }

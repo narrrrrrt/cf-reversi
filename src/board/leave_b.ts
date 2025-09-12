@@ -7,6 +7,9 @@ import { Room } from "../core/Room";
  * @param token ユーザーを識別するトークン
  */
 export function leave(_: Room, token: string): void {
+  // ★ まず activity からは無差別に削除
+  _.activity.delete(token)
+
   // --- 黒がこのトークンなら解除 ---
   if (_.black === token) {
     _.black = null;

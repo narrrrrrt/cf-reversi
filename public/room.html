@@ -7,9 +7,19 @@
 <body>
   <h1>Reversi Room</h1>
 
+  <!-- Reset -->
+  <div>
+    <button onclick="resetRoom()">Reset</button>
+    <span>GET /1/reset</span>
+  </div>
+
+  <hr>
+
   <!-- 共通エリア -->
   <div id="responseArea">Response: </div>
-  <div id="tokenArea">Token: </div>
+  <div id="blackTokenArea">Black Token: </div>
+  <div id="whiteTokenArea">White Token: </div>
+  <div id="observerTokenArea">Observer Token: </div>
 
   <hr>
 
@@ -25,11 +35,16 @@
     <label>Y:</label>
     <select id="blackY"></select>
     <button onclick="moveGet()">Move</button>
-    <span>/1/move?token=&lt;token&gt;&x=&lt;x&gt;&y=&lt;y&gt;</span>
+    <span>/1/move?token=&lt;blackToken&gt;&x=&lt;x&gt;&y=&lt;y&gt;</span>
   </div>
   <div>
     <button onclick="leaveGet()">Leave</button>
-    <span>/1/leave?token=&lt;token&gt;</span>
+    <span>/1/leave?token=&lt;blackToken&gt;</span>
+  </div>
+  <div>
+    <button onclick="startHeartbeat('black')">Heartbeat Start</button>
+    <button onclick="stopHeartbeat('black')">Heartbeat Stop</button>
+    <div id="blackHbArea">Black HB: </div>
   </div>
 
   <hr>
@@ -46,11 +61,16 @@
     <label>Y:</label>
     <select id="whiteY"></select>
     <button onclick="movePost()">Move</button>
-    <span>POST /1/move body: { token:"&lt;token&gt;", x:&lt;x&gt;, y:&lt;y&gt; }</span>
+    <span>POST /1/move body: { token:"&lt;whiteToken&gt;", x:&lt;x&gt;, y:&lt;y&gt; }</span>
   </div>
   <div>
-    <button onclick="leavePost()">Leave</button>
-    <span>POST /1/leave body: { token:"&lt;token&gt;" }</span>
+    <button onclick="leavePost('white')">Leave</button>
+    <span>POST /1/leave body: { token:"&lt;whiteToken&gt;" }</span>
+  </div>
+  <div>
+    <button onclick="startHeartbeat('white')">Heartbeat Start</button>
+    <button onclick="stopHeartbeat('white')">Heartbeat Stop</button>
+    <div id="whiteHbArea">White HB: </div>
   </div>
 
   <hr>
@@ -62,20 +82,35 @@
     <span>POST /1/join body: { seat:"observer" }</span>
   </div>
   <div>
-    <button onclick="leavePost()">Leave</button>
-    <span>POST /1/leave body: { token:"&lt;token&gt;" }</span>
+    <button onclick="leavePost('observer')">Leave</button>
+    <span>POST /1/leave body: { token:"&lt;observerToken&gt;" }</span>
+  </div>
+  <div>
+    <button onclick="startHeartbeat('observer')">Heartbeat Start</button>
+    <button onclick="stopHeartbeat('observer')">Heartbeat Stop</button>
+    <div id="observerHbArea">Observer HB: </div>
   </div>
 
   <hr>
 
   <!-- SSE -->
   <h2>SSE</h2>
-  <div id="sseArea">SSE: </div>
+  <div id="sseInit">init: </div>
+  <div id="sseJoin">join: </div>
+  <div id="sseMove">move: </div>
+  <div id="sseLeave">leave: </div>
+  <div id="sseReset">reset: </div>
 
   <script>
-    const id = "1"; // ★ 今は固定で Room 1
+    const id = "1"; // 固定: Room 1
 
-    let token = null;
+    let blackToken = null;
+    let whiteToken = null;
+    let observerToken = null;
+
+    let blackHbTimer = null;
+    let whiteHbTimer = null;
+    let observerHbTimer = null;
 
     async function handleResponse(res) {
       let rawText = "";
@@ -91,10 +126,29 @@
       document.getElementById("responseArea").innerText =
         "Response: " + rawText + " (status " + res.status + ")";
 
-      if (parsed && parsed.token) {
-        token = parsed.token;
-        document.getElementById("tokenArea").innerText = "Token: " + token;
+      if (parsed && parsed.token && parsed.role) {
+        if (parsed.role === "black") {
+          blackToken = parsed.token;
+          document.getElementById("blackTokenArea").innerText = "Black Token: " + blackToken;
+        } else if (parsed.role === "white") {
+          whiteToken = parsed.token;
+          document.getElementById("whiteTokenArea").innerText = "White Token: " + whiteToken;
+        } else if (parsed.role === "observer") {
+          observerToken = parsed.token;
+          document.getElementById("observerTokenArea").innerText = "Observer Token: " + observerToken;
+        }
       }
+    }
+
+    // --- Reset (GET) ---
+    async function resetRoom() {
+      const endpoint = `/${id}/reset`;
+      const res = await fetch(endpoint);
+      await handleResponse(res);
+      blackToken = whiteToken = observerToken = null;
+      document.getElementById("blackTokenArea").innerText = "Black Token: ";
+      document.getElementById("whiteTokenArea").innerText = "White Token: ";
+      document.getElementById("observerTokenArea").innerText = "Observer Token: ";
     }
 
     // --- Black (GET) ---
@@ -107,15 +161,17 @@
     async function moveGet() {
       const x = document.getElementById("blackX").value;
       const y = document.getElementById("blackY").value;
-      const endpoint = `/${id}/move?token=${token}&x=${x}&y=${y}`;
+      const endpoint = `/${id}/move?token=${blackToken}&x=${x}&y=${y}`;
       const res = await fetch(endpoint);
       await handleResponse(res);
     }
 
     async function leaveGet() {
-      const endpoint = `/${id}/leave?token=${token}`;
+      const endpoint = `/${id}/leave?token=${blackToken}`;
       const res = await fetch(endpoint);
       await handleResponse(res);
+      blackToken = null;
+      document.getElementById("blackTokenArea").innerText = "Black Token: ";
     }
 
     // --- White / Observer (POST) ---
@@ -134,7 +190,7 @@
       const x = document.getElementById("whiteX").value;
       const y = document.getElementById("whiteY").value;
       const endpoint = `/${id}/move`;
-      const body = { token, x, y };
+      const body = { token: whiteToken, x, y };
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -143,8 +199,9 @@
       await handleResponse(res);
     }
 
-    async function leavePost() {
+    async function leavePost(role) {
       const endpoint = `/${id}/leave`;
+      const token = role === "white" ? whiteToken : observerToken;
       const body = { token };
       const res = await fetch(endpoint, {
         method: "POST",
@@ -152,6 +209,41 @@
         body: JSON.stringify(body),
       });
       await handleResponse(res);
+
+      if (role === "white") {
+        whiteToken = null;
+        document.getElementById("whiteTokenArea").innerText = "White Token: ";
+      } else {
+        observerToken = null;
+        document.getElementById("observerTokenArea").innerText = "Observer Token: ";
+      }
+    }
+
+    // --- Heartbeat control ---
+    function startHeartbeat(role) {
+      const token = role === "black" ? blackToken : role === "white" ? whiteToken : observerToken;
+      if (!token) return alert(`${role} token missing`);
+
+      const body = { token };
+      const sendHb = async () => {
+        const res = await fetch(`/${id}/hb`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const text = await res.text();
+        document.getElementById(`${role}HbArea`).innerText = `${role} HB: ${text}`;
+      };
+
+      if (role === "black" && !blackHbTimer) blackHbTimer = setInterval(sendHb, 5000);
+      if (role === "white" && !whiteHbTimer) whiteHbTimer = setInterval(sendHb, 5000);
+      if (role === "observer" && !observerHbTimer) observerHbTimer = setInterval(sendHb, 5000);
+    }
+
+    function stopHeartbeat(role) {
+      if (role === "black" && blackHbTimer) { clearInterval(blackHbTimer); blackHbTimer = null; }
+      if (role === "white" && whiteHbTimer) { clearInterval(whiteHbTimer); whiteHbTimer = null; }
+      if (role === "observer" && observerHbTimer) { clearInterval(observerHbTimer); observerHbTimer = null; }
     }
 
     // --- セレクトボックスに 1〜8 をセット ---
@@ -169,10 +261,11 @@
 
     // --- SSE 接続 ---
     const es = new EventSource(`/${id}/sse`);
-    es.onmessage = (e) => {
-      document.getElementById("sseArea").innerText =
-        "SSE: " + e.data;
-    };
+    es.addEventListener("init", (e) => { document.getElementById("sseInit").innerText = "init: " + e.data; });
+    es.addEventListener("join", (e) => { document.getElementById("sseJoin").innerText = "join: " + e.data; });
+    es.addEventListener("move", (e) => { document.getElementById("sseMove").innerText = "move: " + e.data; });
+    es.addEventListener("leave", (e) => { document.getElementById("sseLeave").innerText = "leave: " + e.data; });
+    es.addEventListener("reset", (e) => { document.getElementById("sseReset").innerText = "reset: " + e.data; });
   </script>
 </body>
 </html>

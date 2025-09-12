@@ -4,31 +4,26 @@ export function join(_: Room, token: string, seat: Seat): Seat {
   if (seat === "black" && !_.black) {
     _.black = token;
     _.step++;
-
-    if (_.white) {
-      _.status = "black";
-      _.boardData = _.legalBoard("black"); // ← 外出しメソッド呼び出し
-    } else {
-      _.status = "waiting";
-      _.boardData = _.defaultBoard();
-    }
-    return "black";
-  }
-
-  if (seat === "white" && !_.white) {
+  } else if (seat === "white" && !_.white) {
     _.white = token;
     _.step++;
-
-    if (_.black) {
-      _.status = "black";
-      _.boardData = _.legalBoard("black");
-    } else {
-      _.status = "waiting";
-      _.boardData = _.defaultBoard();
-    }
-    return "white";
+  } else {
+    // ★ 黒/白の席が埋まっている or observer 指定
+    _.observers.push(token);
+    return "observer";
   }
 
-  _.observers.push(token);
-  return "observer";
+  // ★ 黒白両方揃ったら黒ターンで開始
+  if (_.black && _.white) {
+    _.status = "black";
+    _.boardData = _.legalBoard("black");
+  } else {
+    _.status = "waiting";
+    _.boardData = _.defaultBoard();
+  }
+
+  // ★ join 成功したので lastUpdate を更新
+  _.updateLastUpdate(token);
+
+  return seat;
 }
