@@ -49,7 +49,7 @@ export class SSEManager {
       `event: ${payload.event}\n` +
       `data: ${JSON.stringify(payload.data ?? {})}\n\n`;
     this.queue.push(msg);
-    this.flush();
+    //this.flush();
   }
 
   // ★ flush: キューを順番に処理する
