@@ -1,8 +1,7 @@
-import { Room } from "../core/Room";
-import { MethodResult, SSEMessage } from "../core/Types";
+import { HandlerContext, MethodResult, SSEMessage } from "../core/Types";
 
 export async function leaveHandler(
-  _: Room,
+  _: HandlerContext,
   params: Record<string, any>
 ): Promise<MethodResult> {
   const { token } = params as { token: string };
@@ -10,40 +9,45 @@ export async function leaveHandler(
   if (!token) {
     return {
       response: {
-        ok: false,        // 1. ok
-        step: undefined,  // 2. step
-        error: "Missing token", // 3. error
-        role: undefined,  // 4. role
-        token: undefined, // 5. token
+        ok: false as boolean,
+        step: undefined,
+        error: "Missing token",
+        role: undefined,
+        token: undefined,
       },
       status: 400,
-    };
+    } as MethodResult;
   }
 
-  _.leave(token);
-  await _.save();
+  // Room.leave() で黒/白/observer の実データを更新
+  _.room.leave(token);
+  await _.room.save();
+
+  // activity から削除 → 空ならアラーム停止
+  if (_.room.deleteActivityToken(token)) {
+    await _.state.storage.setAlarm(0);
+  }
 
   const broadcast: SSEMessage = {
     event: "leave",
     data: {
-      status: _.status,     // 1. status
-      step: _.step,         // 2. step
-      // role: 省略 (leave では不要)
-      black: !!_.black,     // 4. black occupancy
-      white: !!_.white,     // 5. white occupancy
-      board: _.boardData,   // 6. board
+      status: _.room.status,
+      step: _.room.step,
+      black: !!_.room.black,
+      white: !!_.room.white,
+      board: _.room.boardData,
     },
-  };
+  } as SSEMessage;
 
   return {
     broadcast,
     response: {
-      ok: true,        // 1. ok
-      step: _.step,    // 2. step
-      error: undefined,// 3. error
-      role: undefined, // 4. role
-      token: undefined,// 5. token
+      ok: true as boolean,
+      step: _.room.step,
+      error: undefined,
+      role: undefined,
+      token: undefined,
     },
     status: 200,
-  };
+  } as MethodResult;
 }

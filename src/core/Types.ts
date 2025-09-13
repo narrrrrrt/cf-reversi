@@ -1,3 +1,12 @@
+import { DurableObjectState } from "@cloudflare/workers-types";
+import { Room } from "./Room";
+
+export interface HandlerContext {
+  room: Room;
+  state: DurableObjectState;
+  env: any;
+}
+
 // プレイヤーの座席
 export type Seat = "black" | "white" | "observer";
 

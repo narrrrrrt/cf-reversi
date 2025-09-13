@@ -1,4 +1,5 @@
 import { Room } from "../core/Room";
+import { HandlerContext } from "../core/Types";
 import { handleAction } from "../core/Core";
 import { SSEManager } from "../sse/SSEManager";
 import { createSSE } from "../sse/SSE";
@@ -6,6 +7,7 @@ import { createSSE } from "../sse/SSE";
 export class RoomDO {
   private room: Room | null = null;
   private sse: SSEManager;
+  private state: DurableObjectState;
 
   constructor(private state: DurableObjectState, private env: any) {
     this.sse = new SSEManager();
@@ -38,7 +40,7 @@ export class RoomDO {
       );
     }
 
-    return handleAction(this.room, action, params);
+    return handleAction({ room: this.room, state: this.state, env: this.env } as HandlerContext, action, params);
   }
 
   // --- アラーム処理 ---

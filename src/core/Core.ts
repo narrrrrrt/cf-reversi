@@ -1,5 +1,5 @@
 import { Room } from "./Room";
-import { MethodResult } from "./Types";
+import { HandlerContext, MethodResult } from "./Types";
 
 // === 動的 import のマップ（ラベルだけ） ===
 const importers: Record<string, () => Promise<any>> = {
@@ -13,7 +13,7 @@ const importers: Record<string, () => Promise<any>> = {
 
 // === Coreのメイン関数 ===
 export async function handleAction(
-  _: Room,
+  _: HandlerContext,
   action: string,
   params: Record<string, any>
 ): Promise<Response> {
@@ -36,7 +36,7 @@ export async function handleAction(
 
   // ★ Core.ts の責務 → SSE にブロードキャスト
   if (result.broadcast) {
-    _.sse.broadcast(result.broadcast);
+    _.room.sse.broadcast(result.broadcast);
   }
 
   // ★ Core.ts の責務 → ユーザーへのレスポンス

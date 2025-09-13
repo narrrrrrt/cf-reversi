@@ -1,36 +1,37 @@
-import { Room } from "../core/Room";
-import { MethodResult, SSEMessage, ResponsePayload } from "../core/Types";
+import { HandlerContext, MethodResult, SSEMessage, ResponsePayload } from "../core/Types";
 
 export async function resetHandler(
-  _: Room,
+  _: HandlerContext,
   params: Record<string, any>
 ): Promise<MethodResult> {
-  _.reset();
-  await _.save();
+  _.room.reset();
+  await _.room.save();
+
+  // ★ reset は全トークン削除後なので必ずアラーム停止
+  await _.state.storage.setAlarm(0);
 
   const broadcast: SSEMessage = {
     event: "reset",
     data: {
-      status: _.status,     // 1. status
-      step: _.step,         // 2. step
-      // role: 不要
-      black: !!_.black,     // 4. black occupancy
-      white: !!_.white,     // 5. white occupancy
-      board: _.boardData,   // 6. board
+      status: _.room.status,   // 1. status
+      step: _.room.step,       // 2. step
+      black: !!_.room.black,   // 3. black occupancy
+      white: !!_.room.white,   // 4. white occupancy
+      board: _.room.boardData, // 5. board
     },
-  };
+  } as SSEMessage;
 
   const response: ResponsePayload = {
-    ok: true,        // 1. ok
-    step: _.step,    // 2. step
-    error: undefined,// 3. error
-    role: undefined, // 4. role
-    token: undefined,// 5. token
-  };
+    ok: true as boolean,
+    step: _.room.step,
+    error: undefined,
+    role: undefined,
+    token: undefined,
+  } as ResponsePayload;
 
   return {
     broadcast,
     response,
     status: 200,
-  };
+  } as MethodResult;
 }

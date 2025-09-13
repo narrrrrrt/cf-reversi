@@ -26,8 +26,6 @@ export class Room {
   activity: Map<string, { hb: number; lu: number }> = new Map();
 
   private storage: DurableObjectStorage;
-  // ★ DurableObjectState を保持（アラーム制御に必要）
-  private state: DurableObjectState; 
 
   constructor(
     id: string,
@@ -87,8 +85,8 @@ export class Room {
     return join(this, token, seat);
   }
 
-  move(x: number, y: number) {
-    return move(this, x, y);
+  move(x: number, y: number, token: string) {
+    return move(this, x, y, token);
   }
 
   leave(token: string) {
@@ -119,25 +117,12 @@ export class Room {
     rec[field] = Date.now();
 
     this.activity.set(token, rec);
-    this.scheduleAlarm();
+    
+    return this.activity.size === 1;
   }
 
-  // --- 公開メソッド（既存の呼び出し互換） ---
-  updateLastUpdate(token: string) {
-    this.updateActivity(token, "lu");
-  }
-
-  updateHeartbeat(token: string) {
-    this.updateActivity(token, "hb");
-  }
-
-  // --- アラーム制御（内部ユーティリティ） ---
-  private async scheduleAlarm() {
-    if (this.activity.size > 0) {
-      await this.state.storage.setAlarm(Date.now() + 30000);
-    } else {
-      // 誰もいなければアラームを解除
-      await this.state.storage.setAlarm(null);
-    }
+  public deleteActivityToken(token: string): boolean {
+    this.activity.delete(token);
+    return this.activity.size === 0;
   }
 }
