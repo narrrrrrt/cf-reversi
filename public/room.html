@@ -3,51 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <title>Reversi Room</title>
-  <link rel="stylesheet" href="css/room.css">
 </head>
 <body>
-  <h1>Reversi Room <span id="room-title" data-template="ID {id}">ID {id}</span></h1>
+  <h1>Reversi Room</h1>
 
-  <div id="token">Your token: <span id="your-token">-</span></div>
-
-  <div id="controls">
-    <div class="control-row">
-      <button id="btn-join">JOIN</button>
-      <span class="url" id="url-join" data-template="/{id}/join">/{id}/join</span>
-    </div>
-    <div class="control-row">
-      <button id="btn-move">MOVE</button>
-      <span class="url" id="url-move" data-template="/{id}/move">/{id}/move</span>
-      <span class="body">{"token":"...","x":
-        <select id="select-x">
-          <option value="1">1</option><option value="2">2</option>
-          <option value="3">3</option><option value="4">4</option>
-          <option value="5">5</option><option value="6">6</option>
-          <option value="7">7</option><option value="8">8</option>
-        </select>,
-        "y":
-        <select id="select-y">
-          <option value="1">1</option><option value="2">2</option>
-          <option value="3">3</option><option value="4">4</option>
-          <option value="5">5</option><option value="6">6</option>
-          <option value="7">7</option><option value="8">8</option>
-        </select>
-      }</span>
-    </div>
-    <div class="control-row">
-      <button id="btn-leave">LEAVE</button>
-      <span class="url" id="url-leave" data-template="/{id}/leave">/{id}/leave</span>
-      <span class="body">{"token":"..."}</span>
-    </div>
-    <div class="control-row">
-      <button id="btn-hb-start">Heartbeat Start</button>
-      <button id="btn-hb-stop">Heartbeat Stop</button>
-    </div>
+  <!-- Reset -->
+  <div>
+    <button id="resetBtn">Reset</button>
+    <span>GET /1/reset</span>
   </div>
 
-  <div id="board"></div>
-  <div id="state-log"></div>
+  <hr>
 
-  <script type="module" src="js/room/main.js"></script>
+  <!-- 共通エリア -->
+  <div id="responseArea">Response: </div>
+  <div id="blackTokenArea">Black Token: </div>
+  <div id="whiteTokenArea">White Token: </div>
+  <div id="observerTokenArea">Observer Token: </div>
+
+  <hr>
+
+  <h2>SSE</h2>
+  <div id="sseInit">init: </div>
+  <div id="sseJoin">join: </div>
+  <div id="sseMove">move: </div>
+  <div id="sseLeave">leave: </div>
+  <div id="sseReset">reset: </div>
+
+  <script src="api.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>

@@ -1,41 +1,31 @@
-export async function join(id, seat) {
-  const url = `/${id}/join`;
-  const body = { seat };
-  const res = await fetch(url, {
+export async function join(seat) {
+  const res = await fetch(`/1/join`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ seat }),
   });
-  return await res.json();
+  return res.json();
 }
 
-export async function move(id, token, x, y) {
-  const url = `/${id}/move`;
-  const body = { token, x, y };
-  const res = await fetch(url, {
+export async function move(token, x, y) {
+  const res = await fetch(`/1/move`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ token, x, y }),
   });
-  return await res.json();
+  return res.json();
 }
 
-export async function leave(id, token) {
-  const url = `/${id}/leave`;
-  const body = { token };
-  await fetch(url, {
+export async function leave(token) {
+  const res = await fetch(`/1/leave`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ token }),
   });
+  return res.json();
 }
 
-export async function heartbeat(id, token) {
-  const url = `/${id}/hb`;
-  const body = { token };
-  await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+export async function reset() {
+  const res = await fetch(`/1/reset`);
+  return res.json();
 }
