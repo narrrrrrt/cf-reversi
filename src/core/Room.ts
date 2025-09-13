@@ -110,12 +110,16 @@ export class Room {
 
   // --- LU/HB 共通更新メソッド ---
   private updateActivity(token: string, field: "hb" | "lu") {
-    const rec = this.activity.get(token);
-    if (rec) {
-      rec[field] = Date.now();
-      this.activity.set(token, rec);
-      this.scheduleAlarm();   // ★ アクティビティ更新時にアラームを仕掛ける
+    let rec = this.activity.get(token);
+
+    if (!rec) {
+      rec = { hb: 0, lu: 0 };
     }
+
+    rec[field] = Date.now();
+
+    this.activity.set(token, rec);
+    this.scheduleAlarm();
   }
 
   // --- 公開メソッド（既存の呼び出し互換） ---
@@ -130,7 +134,7 @@ export class Room {
   // --- アラーム制御（内部ユーティリティ） ---
   private async scheduleAlarm() {
     if (this.activity.size > 0) {
-      await this.state.storage.setAlarm(Date.now() + 5000);
+      await this.state.storage.setAlarm(Date.now() + 30000);
     } else {
       // 誰もいなければアラームを解除
       await this.state.storage.setAlarm(null);
